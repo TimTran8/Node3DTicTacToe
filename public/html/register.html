@@ -1,0 +1,25 @@
+<!DOCTYPE HTML>
+<html lang='en'>
+
+	<head>
+		<meta charset="UTF-8" />
+		<title>Register</title>
+		<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+		<script src='../js/login.js'></script>
+		<link rel='stylesheet' href='../css/style.css' />
+	</head>
+
+	<body>
+		<h1>Welcome New User!</h1>
+		<div id="inputForm">
+			<form>
+				<label for="userName">Username:</label><br>
+				<input type="text" name="username" id="username" placeholder="Username"><br>
+				<label for="password">Password:</label><br>
+				<input type="password" name="password" id="password" placeholder="Password"><br>
+				<input class="buttons" type='button' value='REGISTER' id="submitBtn" onclick="register()" />
+			</form>			
+		</div>
+	</body>
+
+</html>

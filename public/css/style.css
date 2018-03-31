@@ -1,0 +1,75 @@
+#inputForm{
+	border: rgb(184, 184, 184) solid medium;
+	width: 300px;
+	padding: 0.5em;
+	text-align: center;
+	margin: auto;
+	background-color: rgb(215, 249, 250);
+	border-radius: 1em;
+	/* width: 50%; */
+}
+body{
+	font-family: Arial, Helvetica, sans-serif;
+	background-color: rgb(240, 245, 245)
+}
+.buttons{
+	/* margin-bottom: 0.25em;
+	margin-top: 0.25em; */
+	border-radius: 10px;
+	background-color: rgb(207, 231, 243);
+	color: #000;
+	border: 2px solid #000;
+	height: 30px;
+	width: 120px;
+	font-size: 12px;
+	margin-bottom: 2em;
+}
+form{
+	margin-bottom: 0.5em;
+}
+input{
+	margin-bottom:0.5em; 
+}
+#stringval{
+	margin-bottom: 0.5em;
+}
+p{
+	margin-bottom: 0.5em;
+	margin-top: 0.5em
+}
+h1{
+	text-align: center;
+	border-bottom: rgb(177, 175, 175) solid medium;
+}
+button{
+	border-radius: 10px;
+	background-color: rgb(207, 231, 243);
+	color: #000;
+	border: 2px solid #000;
+	height: 30px;
+	width: 120px;
+	font-size: 12px;
+	margin-bottom: 2em;
+}
+#stopcheckbutton{
+	border-radius: 10px;
+	background-color: rgb(207, 231, 243);
+	color: #000;
+	border: 2px solid #000;
+	height: 30px;
+	width: 180px;
+	font-size: 12px;
+	margin-bottom: 2em;
+}
+input{
+	border-radius: 10px;
+	background-color: rgb(227, 231, 233);
+	color: #000;
+	border: 2px solid #000;
+	height: 30px;
+	width: 200px;
+	font-size: 20px;
+	margin-bottom: 0.75em;
+	text-align: center;
+	/* padding-left: 2em */
+}
