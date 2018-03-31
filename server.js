@@ -16,9 +16,12 @@ var options = {
 	index: 'html/login.html'
 }
 
+//test comment to see if that pushed to bitbucket
+
 app.use('/',express.static('./public',options));
 
 //this is a comment to test git on new branch
+
 
 
 
