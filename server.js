@@ -16,6 +16,7 @@ var options = {
 	index: 'html/login.html'
 }
 
+//test2
 //test comment to see if that pushed to bitbucket
 
 app.use('/',express.static('./public',options));
