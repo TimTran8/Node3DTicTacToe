@@ -23,18 +23,18 @@ app.use('/',express.static('./public',options));
 
 /////////////////// POST REGISTRATION API ///////////////////
 app.post('/registrationAPI', function(req,res,next) {
-	/////// NOT WORKING - CANT CONNECT TO DB////////
-	MongoClient.connect(url,function(err,db) {
-		if(err) throw err;
-		var database = db.db('cmpt218_epolovin');
-		database.collection('registeredUsers').insertOne(usersRegistered,function (req,result){
-			if(err) throw err;
-			res.send("User Inserted");
-		}
+	// /////// NOT WORKING - CANT CONNECT TO DB////////
+	// MongoClient.connect(url,function(err,db) {
+	// 	if(err) throw err;
+	// 	var database = db.db('cmpt218_epolovin');
+	// 	database.collection('registeredUsers').insertOne(usersRegistered,function (req,result){
+	// 		if(err) throw err;
+	// 		res.send("User Inserted");
+	// 	}
 
-		);
-	});
-	////////////////////////////// 
+	// 	);
+	// });
+	// ////////////////////////////// 
 });
 
 

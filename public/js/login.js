@@ -6,7 +6,7 @@ function register(){
 	$.ajax({
 		method: 'POST',
 		url: '/registrationAPI',
-		data: 'username='+$('usernameInput').val()+'&password='+$('passwordInput').val(),
+		data: 'username='+$('username').val()+'&password='+$('password').val(),
 		success: registerSuccess
 	});
 }
