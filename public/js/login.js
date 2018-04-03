@@ -4,6 +4,7 @@
 
 function register(){
 
+
 	$.ajax({
 		method: 'POST',
 		url: '/registrationAPI',
