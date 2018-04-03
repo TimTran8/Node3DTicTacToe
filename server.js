@@ -4,9 +4,9 @@ var http = require('http');
 var MongoClient = require('mongodb').MongoClient;
 
 //Ery's database
-//var url = 'mongodb://root:toor@ds119129.mlab.com:19129/cmpt218_epolovin';
+var url = 'mongodb://root:toor@ds119129.mlab.com:19129/cmpt218_epolovin';
 //Miguel's Database
-var url = 'mongodb://root:root@ds117469.mlab.com:17469/cmpt218';
+// var url = 'mongodb://root:root@ds117469.mlab.com:17469/cmpt218';
 var port = process.env.PORT || 8080;
 var usersRegistered = {};
 
@@ -27,12 +27,12 @@ app.use('/',express.static('./public',options));
 /////////////////// POST REGISTRATION API ///////////////////
 app.post('/registrationAPI', function(req,res,next) {
     //Miguel's Database
-    var databaseString = "cmpt218";
-    var collectionString = "test";
+    // var databaseString = "cmpt218";
+    // var collectionString = "test";
 
     //Ery's Database
-//    var databaseString = "cmpt218_epolovin";
-//    var collectionString = "registeredUsers";
+   var databaseString = "cmpt218_epolovin";
+   var collectionString = "registeredUsers";
 
 
     console.log(req.body);
