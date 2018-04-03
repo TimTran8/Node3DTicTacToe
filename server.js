@@ -31,18 +31,30 @@ app.post('/registrationAPI', function(req,res,next) {
     var collectionString = "test";
 
     //Ery's Database
-    var databaseString = "cmpt218_epolovin";
-    var collectionString = "registeredUsers";
+//    var databaseString = "cmpt218_epolovin";
+//    var collectionString = "registeredUsers";
 
-    console.log("before connect");
+
+    console.log(req.body);
+    console.log("attempting to connect to database");
 	MongoClient.connect(url, function(err, client) {
-	    console.log("after connect");
-        if (err) {throw err;}
+        if (err) {
+            console.log("error connecting to database");
+            throw err;
+        }
         console.log("connected to database");
         var database = client.db(databaseString);
         var collection = database.collection(collectionString);
 
-        var documentToDatabase = {random1 : 1, random2 : 2};//TODO: switch out later
+        var documentToDatabase = {
+            username : req.body.username,
+            password : req.body.password,
+            firstName : req.body.firstName,
+            lastName : req.body.lastName,
+            age : req.body.age,
+            gender : req.body.gender,
+            email : req.body.email
+        };
 
         collection.insert(documentToDatabase, function() {
             console.log("the document was inserted to the database hopefully");
