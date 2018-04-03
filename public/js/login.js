@@ -11,7 +11,7 @@ function register(){
 		'&firstName=' + $('#firstName').val() +
 		'&lastName=' + $('#lastName').val() +
 		'&age=' + $('#age').val() +
-		'&gender=' + $('#gender').val() +
+		'&gender=' + $('.gender').val() +
 		'&email=' + $('#email').val(),
 		success: registerSuccess
 	});
