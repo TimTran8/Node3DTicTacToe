@@ -73,3 +73,9 @@ input{
 	text-align: center;
 	/* padding-left: 2em */
 }
+
+table, th, td {
+	border: 2px solid black;
+	border-collapse: collapse;
+	padding: 15px;
+}
