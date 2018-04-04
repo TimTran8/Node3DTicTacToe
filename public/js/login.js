@@ -18,6 +18,6 @@ function register(){
 }
 
 function registerSuccess(data) {
-	window.location.href = './login.html';
+	window.location.href = '/logout';
 	
 }
