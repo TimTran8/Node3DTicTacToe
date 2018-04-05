@@ -20,6 +20,9 @@ function register(){
 }
 
 function registerSuccess(data) {
-	window.location.href = '/logout';
+	window.location.href = '/';
 	
+}
+function back(){
+	window.location.href = '/';
 }

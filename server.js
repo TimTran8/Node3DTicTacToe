@@ -21,6 +21,13 @@ else{
 }
 
 var port = process.env.PORT || 8080;
+var dLBegin = `<dl>`;
+var dLend = `</dl>`;
+var dDBegin = `<dd>`;
+var dDend = `</dd>`;
+var dTBegin = `<dt>`;
+var dTend = `</dt>`;
+var bigDtag = ``;
 
 app.use(express.json());
 app.use(express.urlencoded({extended:false}));
@@ -83,11 +90,27 @@ app.post('/registrationAPI', function(req,res,next) {
             lastName : req.body.lastName,
             age : req.body.age,
             gender : req.body.gender,
-            email : req.body.email
+            email : req.body.email,
+            stats : {
+                wins: null,
+                losses:null,
+                gameArray:[
+                    {
+                        gameId:null, 
+                        timeStarted:null,
+                        winner:null,
+                        loser:null,
+                        numberOfMoves:null
+                    }
+                    
+                ]
+            }
         };
 
         collection.insert(documentToDatabase, function() {
             console.log("the document was inserted to the database hopefully");
+            res.redirect('/');
+            
         });
     });
 });
@@ -125,7 +148,7 @@ app.post('/', function(req,res,next){
                 req.flash('error','Wrong Password');
                 res.redirect('/');
             }
-        })
+        });
     });
 });
 ///////////////////// GET LOGIN /////////////////////////
@@ -163,21 +186,93 @@ app.get('/',function(req,res){
 
 /////////////////// GET LANDING ////////////////////
 app.get('/html/landing',checkIfUserisLoggedin, function(req,res){
-    var landing = `<!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <title>Landing</title>
-        <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
-        <script src='../js/landing.js'></script>
-        <link rel='stylesheet' href='../css/style.css' />
-    </head>
-    <body>
-        <button onclick="logout()">Logout</button>
-    </body>
-    </html>`;
 
-    res.end(landing);
+    var userStatsTag = '';
+    user=req.session.user;
+    uname = user.username; //sees username in session
+    console.log(uname);
+    
+    ///////////////// MONGO FIND /////////////////////
+    MongoClient.connect(url,function(err,client){
+        if(err){throw err;}
+        var database = client.db(databaseString);
+        var collection = database.collection(collectionString);
+
+        var stats = '';
+        var wins = '';
+        var losses = '';
+        var gamesPlayed = '';
+        var gameId = '';
+        var timeStarted = '';
+        var winner = '';
+        var loser = '';
+        var numMoves = '';
+        var numberofgamesPlayed = '';
+
+        collection.find({username:uname}).toArray(function(err,result){
+            // for(var i=0;i<result.length;i++){
+            // console.log((result[0].stats.gameArray[0].gameId));
+            // console.log((result[0].stats.gameArray[0].timeStarted));
+            // console.log((result[0].stats.gameArray[0].winner));
+            // console.log((result[0].stats.gameArray[0].loser));
+            // console.log((result[0].stats.gameArray[0].numberOfMoves));
+            // console.log((result));
+            // console.log(result[0].stats.gameArray.length); //outputs 1 for initial register
+
+            stats += dTBegin + "<b>Stats:</b>" + dTend;
+            wins += dDBegin+"<b>Wins: </b>"+result[0].stats.wins+dDend;
+            losses += dDBegin+"<b>Losses: </b>"+result[0].stats.losses+dDend;
+            gamesPlayed += dTBegin + "<b>Games Played: </b>" + dTend + "<br>";
+
+
+            console.log((result[0].stats.wins));
+            console.log((result[0].stats.losses));
+            
+            for(var i=0; i < result[0].stats.gameArray.length; i++){
+
+                gameId = dDBegin+"<b>Game ID: </b>"+result[0].stats.gameArray[i].gameId+dDend;
+                timeStarted = dDBegin+"<b>Time Started: </b>"+result[0].stats.gameArray[i].timeStarted+dDend;
+                winner = dDBegin+"<b>Winner: </b>"+result[0].stats.gameArray[i].winner+dDend;
+                loser = dDBegin+"<b>Loser: </b>"+result[0].stats.gameArray[i].loser+dDend;
+                numMoves = dDBegin+"<b>Number of Moves: </b>"+result[0].stats.gameArray[i].numberOfMoves+dDend;
+                
+                numberofgamesPlayed+=gameId+timeStarted+winner+loser+numMoves+"<br>";
+            }
+            userStatsTag += dLBegin + 
+                                stats+
+                                    wins+
+                                    losses+
+                                    dDBegin+
+                                        dLBegin+
+                                            gamesPlayed+
+                                            numberofgamesPlayed+
+                                        dLend+
+                                    dDend+
+                            dLend;
+
+                var landing = `<!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8" />
+                        <title>Landing</title>
+                        <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+                        <script src='../js/landing.js'></script>
+                        <link rel='stylesheet' href='../css/style.css' />
+                    </head>
+                    <body>
+                        <div id="userStats">
+                            <p>Displaying Game Statistics for ${uname}</p>
+                            ${userStatsTag}
+                        </div>
+                        <button>New Game</button>
+                        <button onclick="logout()">Logout</button>
+                    </body>
+                    </html>`;
+            
+            // }
+            res.end(landing);
+        });
+    });
 });
 
 app.get('/logout',function(req,res){
@@ -185,7 +280,7 @@ app.get('/logout',function(req,res){
         req.flash('error','Successfully logged out');
         res.redirect('/');
     })
-})
+});
 
 http.createServer(app).listen(port);
 console.log('running on port', port);
