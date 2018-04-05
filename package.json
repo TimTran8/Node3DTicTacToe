@@ -11,6 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.16.3",
+    "express-flash": "0.0.2",
+    "express-session": "^1.15.6",
     "mongodb": "^3.0.5"
   }
 }

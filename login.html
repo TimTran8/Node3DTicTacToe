@@ -12,14 +12,15 @@
 	<body>
 		<h1>Login</h1>
 		<div id='inputForm'>
-			<form>
+			<form action="/" method="POST">
 				<label for='username'>Username:</label> <br>
 				<input name='username' type="text" placeholder="username" id="usernameInput" /><br/>
 				<label for='password'>Password:</label> <br>
 				<input name='password' type='password' placeholder='password' id="passwordInput" /><br/>
-				<input class="buttons" type='button' value='SEND' id="submitBtn" onclick="hello()" />
+				<!-- <input class="buttons" type='button' value='SEND' id="submitBtn" onclick="login()" /> -->
+				<button>LOGIN</button>
 			</form>
-			<div id="wrongPassword"></div>
+			<div id="error"></div>
 			<a href="html/register.html">Register</a>
 		</div>
 	</body>
