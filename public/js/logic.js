@@ -222,7 +222,7 @@ function Board(size){
             console.log("x won");
             return gameStateEnum.X_WON;
         }
-        else if(this.hasPieceWon('player2')){
+        else if(this.hasPieceWon(player2)){
             console.log("o won");
             return gameStateEnum.O_WON;
         }
@@ -321,18 +321,18 @@ function Game(){
                 console.log("finished adding the new character into the board");
                 if(board.hasGameFinished(X_PIECE, O_PIECE) === gameStateEnum.X_WON){
                     console.log("the game has finished with x winning.. game about to end");
-                    alert("x won!");
+                    setTimeout(function(){ alert("x won!"); }, 60);
                     return this.gameEnded();
                 }
                 else if(board.hasGameFinished(X_PIECE, O_PIECE) === gameStateEnum.O_WON){
                     console.log("the game has finished with o winning.. game about to end");
-                    alert("o won!");
+                    setTimeout(function(){ alert("o won!"); }, 60);
                     return this.gameEnded();
 
                 }
                 else if(board.hasGameFinished(X_PIECE, O_PIECE) === gameStateEnum.TIED){
                     console.log("the game has finished with nobody winning.. game about to end");
-                    alert("nobody won!");
+                    setTimeout(function(){ alert("nobody won!"); }, 60);
                     return this.gameEnded();
                 }
                 else{
@@ -357,12 +357,12 @@ function Game(){
 
 var game = new Game();
 
-var dynamicHTML = "";
+var dynamicHTML = "<div>";
 var size = game.getBoardSize();
 
 //Initialize tables
 for(var i = 0; i < size; i++){
-    dynamicHTML += "<table><tbody>";
+    dynamicHTML += "<table class='tables'><tbody>";
     for(var j = 0; j < size; j++){
         dynamicHTML += "<tr>";
         for(var k = 0; k < size; k++){
@@ -370,11 +370,12 @@ for(var i = 0; i < size; i++){
         }
         dynamicHTML += "</tr>"
     }
-    dynamicHTML += "</tbody></table><br>";
+    dynamicHTML += "</tbody></table>";
 }
-dynamicHTML += "<button onclick='quitButtonClicked()'>QUIT GAME</button>";
+dynamicHTML += "</div><div style='clear: both;'></div><button class='quitButton' onclick='quitButtonClicked()'>QUIT GAME</button>";
 
-document.getElementById('tableTest').innerHTML += dynamicHTML;
+//document.getElementById('tableTest').innerHTML += dynamicHTML;
+document.getElementById('tableTest').insertAdjacentHTML('beforeend', dynamicHTML);
 
 //TODO: this function is no longer needed
 function clickedButton(depthCoord, vertCoord, horizCoord, piece){
@@ -385,9 +386,9 @@ function clickedButton(depthCoord, vertCoord, horizCoord, piece){
 
 function cellClicked(depth, row, col){
     console.log("cellClicked!");
-//    document.getElementById('cell' + depth + row + col).innerHTML = game.getExpectedChar();
     document.getElementById('cell' + depth + row + col).style.backgroundColor = game.getExpectedChar() === 'X' ? "blue" : "green";
     game.boardClicked(depth, row, col, game.getExpectedChar());
+    game.getBoard().printState();
 }
 
 function quitButtonClicked(){
