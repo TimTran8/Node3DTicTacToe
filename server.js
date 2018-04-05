@@ -5,14 +5,21 @@ var flash = require('express-flash');
 var session = require('express-session');
 var MongoClient = require('mongodb').MongoClient;
 
-//Ery's database
-//var url = 'mongodb://root:toor@ds119129.mlab.com:19129/cmpt218_epolovin';
-var databaseString = "cmpt218_epolovin";
-var collectionString = "registeredUsers";
-//Miguel's Database
- var url = 'mongodb://root:root@ds117469.mlab.com:17469/cmpt218';
-// var databaseString = "cmpt218";
-// var collectionString = "test";
+var url = '';
+var collectionString = '';
+var collectionString = '';
+var isErys = false;
+if(isErys){
+    url = 'mongodb://root:toor@ds119129.mlab.com:19129/cmpt218_epolovin';
+    databaseString = "cmpt218_epolovin";
+    collectionString = "registeredUsers";
+}
+else{
+     url = 'mongodb://root:root@ds117469.mlab.com:17469/cmpt218';
+     databaseString = "cmpt218";
+     collectionString = "test";
+}
+
 var port = process.env.PORT || 8080;
 
 app.use(express.json());
