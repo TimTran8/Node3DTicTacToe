@@ -79,3 +79,22 @@ table, th, td {
 	border-collapse: collapse;
 	padding: 15px;
 }
+
+td {
+    margin: 0px;
+    padding: 50px;
+}
+
+.tables{
+    float: left;
+    margin: 15px;
+}
+
+#playerOne {
+    color: blue;
+}
+
+#playerTwo {
+    color: green;
+}
+
