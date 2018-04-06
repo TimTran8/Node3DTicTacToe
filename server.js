@@ -4,11 +4,14 @@ var http = require('http');
 var flash = require('express-flash');
 var session = require('express-session');
 var MongoClient = require('mongodb').MongoClient;
-
+var port = process.env.PORT || 8080;
+var server = http.createServer(app).listen(port);
+var io = require('socket.io')(server);
+var clientsConnected = 0;
 var url = '';
 var collectionString = '';
 var collectionString = '';
-var isErys = false;
+var isErys = true;
 if(isErys){
     url = 'mongodb://root:toor@ds119129.mlab.com:19129/cmpt218_epolovin';
     databaseString = "cmpt218_epolovin";
@@ -20,7 +23,6 @@ else{
      collectionString = "test";
 }
 
-var port = process.env.PORT || 8080;
 var dLBegin = `<dl>`;
 var dLend = `</dl>`;
 var dDBegin = `<dd>`;
@@ -178,7 +180,7 @@ app.get('/',function(req,res){
                     </form>
                     <div id="error">${error}</div>
                     <a href="html/register.html">Register</a>
-                </div>
+                </div>               
             </body>
             </html>`;
     res.end(form);
@@ -210,14 +212,6 @@ app.get('/html/landing',checkIfUserisLoggedin, function(req,res){
         var numberofgamesPlayed = '';
 
         collection.find({username:uname}).toArray(function(err,result){
-            // for(var i=0;i<result.length;i++){
-            // console.log((result[0].stats.gameArray[0].gameId));
-            // console.log((result[0].stats.gameArray[0].timeStarted));
-            // console.log((result[0].stats.gameArray[0].winner));
-            // console.log((result[0].stats.gameArray[0].loser));
-            // console.log((result[0].stats.gameArray[0].numberOfMoves));
-            // console.log((result));
-            // console.log(result[0].stats.gameArray.length); //outputs 1 for initial register
 
             stats += dTBegin + "<b>Stats:</b>" + dTend;
             wins += dDBegin+"<b>Wins: </b>"+result[0].stats.wins+dDend;
@@ -266,6 +260,7 @@ app.get('/html/landing',checkIfUserisLoggedin, function(req,res){
                         </div>
                         <button>New Game</button>
                         <button onclick="logout()">Logout</button>
+                        <script src="/socket.io/socket.io.js"></script>
                     </body>
                     </html>`;
             
@@ -282,5 +277,9 @@ app.get('/logout',function(req,res){
     })
 });
 
-http.createServer(app).listen(port);
+io.on('connection', function(socket){
+    console.log('new connection');
+});
+
+// http.createServer(app).listen(port);
 console.log('running on port', port);
