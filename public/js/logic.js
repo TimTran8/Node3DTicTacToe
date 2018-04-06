@@ -1,4 +1,5 @@
 
+var isMyTurn = true;//TODO: implement later
 //Enum for gamestate
 var gameStateEnum = {
     "PLAYING" : 1,
@@ -121,6 +122,7 @@ function Board(size){
         var curHeight = depthCoord;
         var curRow = vertCoord;
         var curCol = horizCoord;
+        var coordinateString = "(" + depthCoord + ", " + vertCoord + ", " + horizCoord + "), ";
 
         while(  (curHeight >= 0 && curHeight < BOARD_SIZE) &&
                 (curRow >= 0 && curRow < BOARD_SIZE) &&
@@ -131,7 +133,9 @@ function Board(size){
             curHeight += depthDirection;
             curRow += vertDirection;
             curCol += horizDirection;
+            coordinateString += "(" + curHeight + ", " + curRow + ", " + curCol + "), ";
         }
+        console.log("this is the winning coordinate strings: " + coordinateString);
         return true;
     }
 
@@ -219,11 +223,11 @@ function Board(size){
     this.hasGameFinished = function(player1, player2){
         console.log("hasGameFinished called");
         if(this.hasPieceWon(player1)){
-            console.log("x won");
+            console.log(player1 + "won");
             return gameStateEnum.X_WON;
         }
         else if(this.hasPieceWon(player2)){
-            console.log("o won");
+            console.log(player2 + "o won");
             return gameStateEnum.O_WON;
         }
         else if(this.isBoardFull()){
@@ -253,16 +257,17 @@ function Board(size){
     }
 }
 
-function Game(){
+function Game(player1, player2, boardSize){
     console.log("about to make a game");
-    var BOARD_SIZE = 4;
-    var X_PIECE = 'X';
-    var O_PIECE = 'O';
+    var BOARD_SIZE = boardSize;
+    var piece1 = player1;
+    var piece2 = player2;//TODO: do i need to know who the players are as in the names?
+
     var currentGameState = gameStateEnum.PLAYING;
     var board = new Board(BOARD_SIZE);
-    var expectedChar = X_PIECE;
+    var expectedChar = piece1;//TODO: will not need this when we do sockets
     console.log("initialized a game");
-    //TODO: do i need to know who the players are as in the names?
+
 
     //the game has 4 boards.
 
@@ -276,7 +281,7 @@ function Game(){
     /*
         Returns the expected character of the game.
     */
-    this.getExpectedChar = function(){
+    this.getExpectedChar = function(){//TODO: will not need this when we do sockets
         return expectedChar;
     }
 
@@ -284,13 +289,13 @@ function Game(){
         Updates the expected character.
         CLIENT MUST NOT TOUCH THIS.
     */
-    this.updateExpectedChar = function(){
+    this.updateExpectedChar = function(){//TODO: will not need this when we do sockets
         console.log("updateExpectedChar called");
-        if(expectedChar === X_PIECE){
-            expectedChar = O_PIECE;
+        if(expectedChar === piece1){
+            expectedChar = piece2;
         }
         else{
-            expectedChar = X_PIECE;
+            expectedChar = piece1;
         }
         console.log("updated expected char.. it is now " + expectedChar);
     }
@@ -300,6 +305,7 @@ function Game(){
     */
     this.gameEnded = function(state){
         console.log("gameEnded called");
+        //socket.emit('myGameFinished',jsonObj);
         //TODO: use socketio or something so that we can determine whos turn is it? but how can we have many games while this is happening? hm
         //TODO: maybe return a json? or maybe this is what will talk to the server?
     }
@@ -315,29 +321,35 @@ function Game(){
         console.log("boardClicked called");
         if(!board.isLocationFilled(row, col, height)){
             console.log("specified location not filled");
-            if(piece === expectedChar){
+            if(piece === expectedChar){//TODO: will not need expectedChar when we do sockets
+                document.getElementById('cell' + height + row + col).style.backgroundColor = game.getExpectedChar() === piece1 ? "blue" : "green";//TODO: will not need expectedChar when we do socket
                 console.log("the piece is the expected char")
                 board.addNewCharacter(row, col, height, piece);
                 console.log("finished adding the new character into the board");
-                if(board.hasGameFinished(X_PIECE, O_PIECE) === gameStateEnum.X_WON){
-                    console.log("the game has finished with x winning.. game about to end");
-                    setTimeout(function(){ alert("x won!"); }, 60);
-                    return this.gameEnded();
+                if(board.hasGameFinished(piece1, piece2) === gameStateEnum.X_WON){
+                    console.log("the game has finished with " + piece1 + " winning.. game about to end");
+                    setTimeout(function(){ alert(piece1 + " won!"); }, 60);
+                    this.gameEnded(gameStateEnum.X_WON);
+                    return;
                 }
-                else if(board.hasGameFinished(X_PIECE, O_PIECE) === gameStateEnum.O_WON){
-                    console.log("the game has finished with o winning.. game about to end");
-                    setTimeout(function(){ alert("o won!"); }, 60);
-                    return this.gameEnded();
-
+                else if(board.hasGameFinished(piece1, piece2) === gameStateEnum.O_WON){
+                    console.log("the game has finished with " + piece2 + " winning.. game about to end");
+                    setTimeout(function(){ alert(piece2 + " won!"); }, 60);
+                    this.gameEnded(gameStateEnum.O_WON);
+                    return;
                 }
-                else if(board.hasGameFinished(X_PIECE, O_PIECE) === gameStateEnum.TIED){
+                else if(board.hasGameFinished(piece1, piece2) === gameStateEnum.TIED){
                     console.log("the game has finished with nobody winning.. game about to end");
                     setTimeout(function(){ alert("nobody won!"); }, 60);
-                    return this.gameEnded();
+                    this.gameEnded(gameStateEnum.TIED);
+                    return;
                 }
                 else{
                     console.log("the game has not yet finished.. game will continue");
-                    this.updateExpectedChar();
+                    isMyTurn = false;
+                    //TODO: do an emit here for sendUpdatedBoard
+                    //socket.emit('sendUpdatedBoard',jsonObj);//json object willl have the coordinates and username of myself
+                    this.updateExpectedChar();//TODO: will not need this when we start using sockets
                 }
                 return;
             }
@@ -355,10 +367,25 @@ function Game(){
     }
 }
 
-var game = new Game();
+
+
+
+
+
+
+
+
+
+var player1 = 'hi';//TODO: change these later to be the actual usernames... player1 is always yourself but player2 is always the opponent
+var player2 = 'hello';
+var size = 4;
+var game = new Game(player1, player2, size);
+
+//var socket = io("http://cmpt218.csil.sfu.ca:8080");//TODO: change later to the correct thing
+
+
 
 var dynamicHTML = "<div>";
-var size = game.getBoardSize();
 
 //Initialize tables
 for(var i = 0; i < size; i++){
@@ -374,24 +401,77 @@ for(var i = 0; i < size; i++){
 }
 dynamicHTML += "</div><div style='clear: both;'></div><button class='quitButton' onclick='quitButtonClicked()'>QUIT GAME</button>";
 
-//document.getElementById('tableTest').innerHTML += dynamicHTML;
 document.getElementById('tableTest').insertAdjacentHTML('beforeend', dynamicHTML);
-
-//TODO: this function is no longer needed
-function clickedButton(depthCoord, vertCoord, horizCoord, piece){
-    console.log("button clicked");
-    game.boardClicked(depthCoord, vertCoord, horizCoord, piece);
-    game.getBoard().printState();
-}
 
 function cellClicked(depth, row, col){
     console.log("cellClicked!");
-    document.getElementById('cell' + depth + row + col).style.backgroundColor = game.getExpectedChar() === 'X' ? "blue" : "green";
-    game.boardClicked(depth, row, col, game.getExpectedChar());
+    game.boardClicked(row, col, depth, game.getExpectedChar());//TODO: will not need expected char when we use socket
+    if(isMyTurn){
+        //TODO: use the appropriate players username
+        //game.boardClicked(row, col, depth, player1);//TODO: uncomment later when socket.io works
+    }
     game.getBoard().printState();
 }
 
 function quitButtonClicked(){
     alert("someone quit!");
-    game.gameEnded(gameStateEnum.X_WON);//TODO: change later
+    //TODO: user the other players username;
+    game.gameEnded(gameStateEnum.X_WON);//TODO: change later so that we have the parameter of the other person winning
 }
+
+
+
+//function disconnectFromSocket(){
+//	socket.emit('chat', `${username} has diconnected`);
+//	printMessage("You have diconnected");
+//	socket.close();
+//	// re-direct
+//}
+
+//TODO: on gameStart
+//socket.on('gameStart',function(jsonObj){
+//	//not too sure what to do here still
+//});
+
+//TODO: on opponentBoardUpdated
+//socket.on('opponentBoardUpdated',function(jsonObj){
+//	//the jsonObject (maybe) has height, row, and col coordinates and the name of the enemy?
+//  game.boardClicked(row, col, depth, player2);
+//  isMyTurn = true;
+//});
+
+//TODO: on opponentEntered
+//socket.on('opponentEntered',function(jsonObj){
+//	//not too sure what to do here still
+//});
+
+//TODO: on gameFinished
+//socket.on('gameFinished',function(jsonObj){
+//	//do a post on the jsonObject so that we can hand the data into the database for this particular person
+//  //ajax call where you post the data into database, after, you disconnect from the socket, then redirect to the finished page
+//});
+
+/*
+    logic.js should have a variable whether or not the player can click a cell or not
+
+
+    Client Side:
+    on opponentBoardUpdated :
+        - recieves a json object that has the board
+        - we replace our board to be the most updated board
+        - we set our isOurTurn to be true
+
+    on opponentEntered
+
+    on gameFinished :
+        ~this will tell us that the game has ended whether it was from myself or from the opponent
+        -receives a json object that has the board and who won and who lost, and time started, and number of moves
+        - we replace our board to be the most updated board
+        - we post the winner, the loser, the time started, and the number of moves to the server
+
+    emit sendUpdatedBoard:
+        -sends out a json object that has the coordinates of where the piece is placed and the username of the opponent
+
+    emit myGameFinished:
+        -sends a json object that has the board, who won, and who lost, time started, and number of moves
+*/
