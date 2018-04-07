@@ -288,6 +288,7 @@ app.get('/html/game', checkIfUserisLoggedin,function(req,res){
             <p id='playerTwo'></p>
             <br>
             <p id='turn'>Turn: </p>
+            <p id='playerTurn'></p>
             <script src="/socket.io/socket.io.js"></script>
         </body>
     </html>`;
@@ -326,9 +327,9 @@ io.on('connection', function(socket){
     console.log("people online", peopleOnline);
     
     console.log('new connection');
-    socket.on('myGameFinished', function(){
+    socket.on('myGameFinished', function(jsonObj){
        console.log("game has finished");
-       socket.broadcast.emit('gameFinished', 'game fin');
+       socket.broadcast.emit('gameFinished', jsonObj);
 
     });
     socket.on('sendUpdatedBoard',function(jsonObj){
