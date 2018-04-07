@@ -327,11 +327,11 @@ io.on('connection', function(socket){
     console.log("people online", peopleOnline);
     
     console.log('new connection');
-    socket.on('myGameFinished', function(jsonObj){
-       console.log("game has finished");
-       socket.broadcast.emit('gameFinished', jsonObj);
-
-    });
+//    socket.on('myGameFinished', function(jsonObj){
+//       console.log("game has finished");
+//       socket.broadcast.emit('gameFinished', jsonObj);
+//
+//    });
     socket.on('sendUpdatedBoard',function(jsonObj){
        console.log("updated board");
        socket.broadcast.emit('opponentBoardUpdated', jsonObj);//only the other person gets the updated board

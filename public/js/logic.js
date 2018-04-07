@@ -275,6 +275,10 @@ function Game(player1, player2, boardSize){
         piece2 = piece;
     }
 
+    this.setTime = function(newTime){
+        time = newTime;
+    }
+
     /*
         Does end game functions.
     */
@@ -332,39 +336,35 @@ function Game(player1, player2, boardSize){
         console.log("the piece being placed in is " + piece);
         if(!board.isLocationFilled(height, row, col)){
             console.log("specified location not filled");
-            if(true){//TODO: will not need expectedChar when we do sockets
-                document.getElementById('cell' + height + row + col).style.backgroundColor = piece === piece1 ? "blue" : "green";
-                console.log("the piece is the expected char")
-                board.addNewCharacter(height, row, col, piece);
-                console.log("finished adding the new character into the board");
-                if(board.hasGameFinished(piece1, piece2) === gameStateEnum.X_WON){
-                    console.log("the game has finished with " + piece1 + " winning.. game about to end");
-                    setTimeout(function(){ alert(piece1 + " won!"); }, 60);//TODO: take out when implementing gameFinished
-                    this.gameEnded(gameStateEnum.X_WON);
-                    this.sendUpdatedBoard(height, row, col, piece);
-                    return;
-                }
-                else if(board.hasGameFinished(piece1, piece2) === gameStateEnum.O_WON){
-                    console.log("the game has finished with " + piece2 + " winning.. game about to end");
-                    setTimeout(function(){ alert(piece2 + " won!"); }, 60);//TODO: take out when implementing gameFinished
-                    this.gameEnded(gameStateEnum.O_WON);
-                    this.sendUpdatedBoard(height, row, col, piece);
-                    return;
-                }
-                else if(board.hasGameFinished(piece1, piece2) === gameStateEnum.TIED){
-                    console.log("the game has finished with nobody winning.. game about to end");
-                    setTimeout(function(){ alert("nobody won!"); }, 60);//TODO: take out when implementing gameFinished
-                    this.gameEnded(gameStateEnum.TIED);
-                    this.sendUpdatedBoard(height, row, col, piece);
-                    return;
-                }
-                else{
-                    console.log("the game has not yet finished.. game will continue");
-                    this.sendUpdatedBoard(height, row, col, piece);
-                }
+            document.getElementById('cell' + height + row + col).style.backgroundColor = piece === piece1 ? "blue" : "green";
+            console.log("the piece is the expected char")
+            board.addNewCharacter(height, row, col, piece);
+            console.log("finished adding the new character into the board");
+            if(board.hasGameFinished(piece1, piece2) === gameStateEnum.X_WON){
+                console.log("the game has finished with " + piece1 + " winning.. game about to end");
+                setTimeout(function(){ alert(piece1 + " won!"); }, 60);//TODO: take out when implementing gameFinished
+                this.gameEnded(gameStateEnum.X_WON);
+                this.sendUpdatedBoard(height, row, col, piece);
                 return;
             }
-            console.log("Error: piece was NOT the expectedChar.. not doing anything");
+            else if(board.hasGameFinished(piece1, piece2) === gameStateEnum.O_WON){
+                console.log("the game has finished with " + piece2 + " winning.. game about to end");
+                setTimeout(function(){ alert(piece2 + " won!"); }, 60);//TODO: take out when implementing gameFinished
+                this.gameEnded(gameStateEnum.O_WON);
+                this.sendUpdatedBoard(height, row, col, piece);
+                return;
+            }
+            else if(board.hasGameFinished(piece1, piece2) === gameStateEnum.TIED){
+                console.log("the game has finished with nobody winning.. game about to end");
+                setTimeout(function(){ alert("nobody won!"); }, 60);//TODO: take out when implementing gameFinished
+                this.gameEnded(gameStateEnum.TIED);
+                this.sendUpdatedBoard(height, row, col, piece);
+                return;
+            }
+            else{
+                console.log("the game has not yet finished.. game will continue");
+                this.sendUpdatedBoard(height, row, col, piece);
+            }
             return;
         }
         console.log("Error: the location where it was clicked is already filled.. not doing anything");
@@ -447,6 +447,7 @@ socket.on('gameStart',function(jsonObj){
     }
     document.getElementById('playerTwo').innerHTML += player2;
     document.getElementById('playerTurn').innerHTML = isMyTurn ? player1 : player2;
+    game.setTime(Date());
     console.log("game started");
 });
 
