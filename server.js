@@ -9,7 +9,7 @@ var server = http.createServer(app).listen(port);
 var io = require('socket.io')(server);
 var clientsConnected = 0;
 var url = '';
-var collectionString = '';
+var databaseString = '';
 var collectionString = '';
 var isErys = true;
 if(isErys){
@@ -60,7 +60,7 @@ function checkIfUserisLoggedin(req,res,next){
 app.use(session({
     name:"session",
     secret:"CMPT218",
-    maxAge: 1000*60*60*2 //set age to 2 hours but we can change it
+    maxAge: 1000 //set age to 2 hours but we can change it
 }));
 
 /////////////////// POST REGISTRATION API ///////////////////
@@ -191,7 +191,7 @@ app.get('/html/landing',checkIfUserisLoggedin, function(req,res){
 
     var userStatsTag = '';
     user=req.session.user;
-    uname = user.username; //sees username in session
+    var uname = user.username; //sees username in session
     console.log(uname);
     
     ///////////////// MONGO FIND /////////////////////
@@ -270,6 +270,33 @@ app.get('/html/landing',checkIfUserisLoggedin, function(req,res){
     });
 });
 
+////////////////// GAME HTML ////////////////
+var usernameArray = [];
+
+app.get('/html/game', checkIfUserisLoggedin,function(req,res){
+    
+    var game = `<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>3D Tic Tac Toe</title>
+        <script src='../js/logic.js' defer></script>
+        <link rel='stylesheet' href='../css/style.css' />
+    </head>
+        <body id="tableTest">
+            <p id='playerOne'>${req.session.user.username}</p>
+            <p id='playerTwo'></p>
+            <br>
+            <p id='turn'>Turn: </p>
+            <script src="/socket.io/socket.io.js"></script>
+        </body>
+    </html>`;
+    usernameArray.push(req.session.user.username);
+    res.end(game);
+
+
+});
+
 ///////////////// LOGOUT ///////////////////
 app.get('/logout',function(req,res){
     req.session.regenerate(function(err){
@@ -282,7 +309,19 @@ var peopleOnline = 0;
 io.on('connection', function(socket){
     peopleOnline++;
     if(peopleOnline === 2){
-        socket.broadcast.emit('gameStart', true);//how to make it so that someone gets true while the other gets false
+        console.log('there are now two players in the thing, here is the thing' + usernameArray);
+        var jsonObj = {
+            "usernameArray" : usernameArray,
+            "isMyTurn" : true
+        }
+        socket.broadcast.emit('gameStart', jsonObj);//how to make it so that someone gets true while the other gets false
+        jsonObj = {
+            "usernameArray" : usernameArray,
+            "isMyTurn" : false
+        }
+        socket.emit('gameStart', jsonObj);//how to make it so that someone gets true while the other gets false
+        peopleOnline = 0;
+        usernameArray = [];
     }
     console.log("people online", peopleOnline);
     

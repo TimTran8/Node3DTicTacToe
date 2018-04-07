@@ -286,6 +286,10 @@ function Game(player1, player2, boardSize){
         return expectedChar;
     }
 
+    this.setPlayer2 = function(piece){
+        piece2 = piece;
+    }
+
     /*
         Updates the expected character.
         CLIENT MUST NOT TOUCH THIS.
@@ -384,8 +388,9 @@ function Game(player1, player2, boardSize){
 
 
 
-var player1 = 'hi';//TODO: change these later to be the actual usernames... player1 is always yourself but player2 is always the opponent
-var player2 = 'hello';
+var player1 = document.getElementById('playerOne').innerHTML;//TODO: change these later to be the actual usernames... player1 is always yourself but player2 is always the opponent
+var player2 = '';
+console.log('player 1 is ' + player1);
 var size = 4;
 var game = new Game(player1, player2, size);
 
@@ -416,7 +421,7 @@ function cellClicked(depth, row, col){
     // game.boardClicked(row, col, depth, game.getExpectedChar());//TODO: will not need expected char when we use socket
     if(isMyTurn){
         //TODO: use the appropriate players username
-        game.boardClicked(row, col, depth, player1);//TODO: uncomment later when socket.io works
+        game.boardClicked(depth, row, col, player1);//TODO: uncomment later when socket.io works
     }
     game.getBoard().printState();
 }
@@ -436,18 +441,33 @@ function disconnectFromSocket(){
 }
 
 //TODO: on gameStart
-socket.on('gameStart',function(isPlayer1){
-    isMyTurn = isPlayer1;
+socket.on('gameStart',function(jsonObj){
+    isMyTurn = jsonObj.isMyTurn;
+    console.log("is my turn = ", isMyTurn);
+    // isMyTurn = true;
+    for(var i = 0; i < jsonObj.usernameArray.length; i++){
+        if(jsonObj.usernameArray[i] !== player1){
+            player2 = jsonObj.usernameArray[i];
+            game.setPlayer2(player2);
+        }
+    }
+    document.getElementById('playerTwo').innerHTML += player2;
+    console.log("game started");
+    
     //not too sure what to do here still
     //someones gonna have a true while the other has a false
 });
 
 //TODO: on opponentBoardUpdated
 socket.on('opponentBoardUpdated',function(jsonObj){
-	//the jsonObject (maybe) has height, row, and col coordinates and the name of the enemy?
-    game.boardClicked(jsonObj.row, jsonObj.col, jsonObj.height, player2);
-    isMyTurn = true;
-    console.log('oponent updated board');
+    //the jsonObject (maybe) has height, row, and col coordinates and the name of the enemy?
+    if(jsonObj.piece !== player1){
+        console.log(jsonObj);
+        game.boardClicked(jsonObj.height, jsonObj.row, jsonObj.col, player2);
+        isMyTurn = true;
+        game.getBoard().printState();
+        console.log('oponent updated board');
+    }
     
 });
 
