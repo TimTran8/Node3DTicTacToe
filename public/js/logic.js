@@ -8,6 +8,7 @@ var gameStateEnum = {
     "TIED" : 4
 }
 
+
 var pieceEnum = {
     "X_PIECE" : 'X',
     "O_PIECE" : 'O',
@@ -305,7 +306,7 @@ function Game(player1, player2, boardSize){
     */
     this.gameEnded = function(state){
         console.log("gameEnded called");
-        //socket.emit('myGameFinished',jsonObj);
+        socket.emit('myGameFinished','jsonObj');
         //TODO: use socketio or something so that we can determine whos turn is it? but how can we have many games while this is happening? hm
         //TODO: maybe return a json? or maybe this is what will talk to the server?
     }
@@ -321,8 +322,8 @@ function Game(player1, player2, boardSize){
         console.log("boardClicked called");
         if(!board.isLocationFilled(row, col, height)){
             console.log("specified location not filled");
-            if(piece === expectedChar){//TODO: will not need expectedChar when we do sockets
-                document.getElementById('cell' + height + row + col).style.backgroundColor = game.getExpectedChar() === piece1 ? "blue" : "green";//TODO: will not need expectedChar when we do socket
+            if(true){//TODO: will not need expectedChar when we do sockets
+                document.getElementById('cell' + height + row + col).style.backgroundColor = piece === piece1 ? "blue" : "green";//TODO: will not need expectedChar when we do socket
                 console.log("the piece is the expected char")
                 board.addNewCharacter(row, col, height, piece);
                 console.log("finished adding the new character into the board");
@@ -348,8 +349,15 @@ function Game(player1, player2, boardSize){
                     console.log("the game has not yet finished.. game will continue");
                     isMyTurn = false;
                     //TODO: do an emit here for sendUpdatedBoard
-                    //socket.emit('sendUpdatedBoard',jsonObj);//json object willl have the coordinates and username of myself
-                    this.updateExpectedChar();//TODO: will not need this when we start using sockets
+                    var jsonObj = {
+                        "row":row,
+                        "col":col,
+                        "height":height,
+                        "piece":piece
+                    }
+                    socket.emit('sendUpdatedBoard',jsonObj);//json object willl have the coordinates and username of myself
+                    // this.updateExpectedChar();//TODO: will not need this when we start using sockets
+                    isMyTurn = false;
                 }
                 return;
             }
@@ -381,8 +389,8 @@ var player2 = 'hello';
 var size = 4;
 var game = new Game(player1, player2, size);
 
-//var socket = io("http://cmpt218.csil.sfu.ca:8080");//TODO: change later to the correct thing
-
+// var socket = io("http://cmpt218.csil.sfu.ca:8080");//TODO: change later to the correct thing
+var socket = io("http://localhost:8080");
 
 
 var dynamicHTML = "<div>";
@@ -405,10 +413,10 @@ document.getElementById('tableTest').insertAdjacentHTML('beforeend', dynamicHTML
 
 function cellClicked(depth, row, col){
     console.log("cellClicked!");
-    game.boardClicked(row, col, depth, game.getExpectedChar());//TODO: will not need expected char when we use socket
+    // game.boardClicked(row, col, depth, game.getExpectedChar());//TODO: will not need expected char when we use socket
     if(isMyTurn){
         //TODO: use the appropriate players username
-        //game.boardClicked(row, col, depth, player1);//TODO: uncomment later when socket.io works
+        game.boardClicked(row, col, depth, player1);//TODO: uncomment later when socket.io works
     }
     game.getBoard().printState();
 }
@@ -420,36 +428,41 @@ function quitButtonClicked(){
 }
 
 
-
-//function disconnectFromSocket(){
-//	socket.emit('chat', `${username} has diconnected`);
-//	printMessage("You have diconnected");
-//	socket.close();
-//	// re-direct
-//}
+function disconnectFromSocket(){
+	socket.emit('chat', `${username} has diconnected`);
+	printMessage("You have diconnected");
+	socket.close();
+	// re-direct
+}
 
 //TODO: on gameStart
-//socket.on('gameStart',function(jsonObj){
-//	//not too sure what to do here still
-//});
+socket.on('gameStart',function(isPlayer1){
+    isMyTurn = isPlayer1;
+    //not too sure what to do here still
+    //someones gonna have a true while the other has a false
+});
 
 //TODO: on opponentBoardUpdated
-//socket.on('opponentBoardUpdated',function(jsonObj){
-//	//the jsonObject (maybe) has height, row, and col coordinates and the name of the enemy?
-//  game.boardClicked(row, col, depth, player2);
-//  isMyTurn = true;
-//});
+socket.on('opponentBoardUpdated',function(jsonObj){
+	//the jsonObject (maybe) has height, row, and col coordinates and the name of the enemy?
+    game.boardClicked(jsonObj.row, jsonObj.col, jsonObj.height, player2);
+    isMyTurn = true;
+    console.log('oponent updated board');
+    
+});
 
 //TODO: on opponentEntered
-//socket.on('opponentEntered',function(jsonObj){
-//	//not too sure what to do here still
-//});
+socket.on('opponentEntered',function(jsonObj){
+	//not too sure what to do here still
+});
 
 //TODO: on gameFinished
-//socket.on('gameFinished',function(jsonObj){
-//	//do a post on the jsonObject so that we can hand the data into the database for this particular person
-//  //ajax call where you post the data into database, after, you disconnect from the socket, then redirect to the finished page
-//});
+socket.on('gameFinished',function(jsonObj){
+    console.log('game is finished');
+    
+	//do a post on the jsonObject so that we can hand the data into the database for this particular person
+ //ajax call where you post the data into database, after, you disconnect from the socket, then redirect to the finished page
+});
 
 /*
     logic.js should have a variable whether or not the player can click a cell or not

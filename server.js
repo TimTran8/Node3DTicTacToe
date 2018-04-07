@@ -270,6 +270,7 @@ app.get('/html/landing',checkIfUserisLoggedin, function(req,res){
     });
 });
 
+///////////////// LOGOUT ///////////////////
 app.get('/logout',function(req,res){
     req.session.regenerate(function(err){
         req.flash('error','Successfully logged out');
@@ -277,9 +278,31 @@ app.get('/logout',function(req,res){
     })
 });
 
+var peopleOnline = 0;
 io.on('connection', function(socket){
+    peopleOnline++;
+    if(peopleOnline === 2){
+        socket.broadcast.emit('gameStart', true);//how to make it so that someone gets true while the other gets false
+    }
+    console.log("people online", peopleOnline);
+    
     console.log('new connection');
+    socket.on('myGameFinished', function(){
+       console.log("game has finished");
+       socket.broadcast.emit('gameFinished', 'game fin');
+
+    });
+    socket.on('sendUpdatedBoard',function(jsonObj){
+       console.log("updated board");
+       socket.broadcast.emit('opponentBoardUpdated', jsonObj);//only the other person gets the updated board
+    });
+    socket.on('disconnect', function(){
+        peopleOnline--;
+       console.log("diconnected");
+        
+    });
 });
+
 
 // http.createServer(app).listen(port);
 console.log('running on port', port);
