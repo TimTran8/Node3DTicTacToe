@@ -48,16 +48,16 @@ function Board(size){
         Does not care what kind of piece is being inserted.
         Takes in the coordinates and the piece being inserted.
     */
-    this.addNewCharacter = function(row, col, height, piece){
+    this.addNewCharacter = function(height, row, col, piece){
         console.log("new character(" + piece + ") added at (" + row + ", " + col + ", " + height + ")");
-        boardArray[row][col][height] = piece;
+        boardArray[height][row][col] = piece;
     }
 
     /*
         Sees if the location that is asking to be placed in is still within the boards boundaries.
         Takes in the coordinates of the board.
     */
-    this.isLocationValid = function(row, col, height){
+    this.isLocationValid = function(height, row, col){
         console.log("isLocationValid called");
         return  (row >= 0 && row < BOARD_SIZE) &&
                 (col >= 0 && col < BOARD_SIZE) &&
@@ -68,9 +68,9 @@ function Board(size){
         Sees if the location that is asking to be placed already has something inside it.
         Takes in the coordinates of the board.
     */
-    this.isLocationFilled = function(row, col, height){
+    this.isLocationFilled = function(height, row, col){
         console.log("isLocationFilled called");
-        return boardArray[row][col][height] !== EMPTY_CELL;
+        return boardArray[height][row][col] !== EMPTY_CELL;
     }
 
     /*
@@ -81,7 +81,7 @@ function Board(size){
         for(var depthIndex = 0; depthIndex < BOARD_SIZE; depthIndex++){
             for(var horizIndex = 0; horizIndex < BOARD_SIZE; horizIndex++){
                 for(var vertIndex = 0; vertIndex < BOARD_SIZE; vertIndex++){
-                    if(boardArray[vertIndex][horizIndex][depthIndex] === EMPTY_CELL){
+                    if(boardArray[depthIndex][vertIndex][horizIndex] === EMPTY_CELL){
                         console.log("board is NOT full");
                         return false;
                     }
@@ -101,7 +101,7 @@ function Board(size){
         for(var depthIndex = 0; depthIndex < BOARD_SIZE; depthIndex++){
             for(var horizIndex = 0; horizIndex < BOARD_SIZE; horizIndex++){
                 for(var vertIndex = 0; vertIndex < BOARD_SIZE; vertIndex++){
-                    if(boardArray[vertIndex][horizIndex][depthIndex] !== EMPTY_CELL){
+                    if(boardArray[depthIndex][vertIndex][horizIndex] !== EMPTY_CELL){
                         pieceAmount++;
                     }
                 }
@@ -322,14 +322,15 @@ function Game(player1, player2, boardSize){
         This is what happens to update the game and let it do its thing.
         Accepts the coordinates and the piece that one tries to place into the board.
     */
-    this.boardClicked = function(row, col, height, piece){
-        console.log("boardClicked called");
-        if(!board.isLocationFilled(row, col, height)){
+    this.boardClicked = function(height, row, col, piece){
+        console.log("boardClicked called at (" + height + ", " + row + ", " + col + ")");
+        console.log("the piece being placed in is " + piece);
+        if(!board.isLocationFilled(height, row, col)){
             console.log("specified location not filled");
             if(true){//TODO: will not need expectedChar when we do sockets
                 document.getElementById('cell' + height + row + col).style.backgroundColor = piece === piece1 ? "blue" : "green";//TODO: will not need expectedChar when we do socket
                 console.log("the piece is the expected char")
-                board.addNewCharacter(row, col, height, piece);
+                board.addNewCharacter(height, row, col, piece);
                 console.log("finished adding the new character into the board");
                 if(board.hasGameFinished(piece1, piece2) === gameStateEnum.X_WON){
                     console.log("the game has finished with " + piece1 + " winning.. game about to end");
@@ -354,9 +355,9 @@ function Game(player1, player2, boardSize){
                     isMyTurn = false;
                     //TODO: do an emit here for sendUpdatedBoard
                     var jsonObj = {
+                        "height":height,
                         "row":row,
                         "col":col,
-                        "height":height,
                         "piece":piece
                     }
                     socket.emit('sendUpdatedBoard',jsonObj);//json object willl have the coordinates and username of myself
@@ -417,13 +418,13 @@ dynamicHTML += "</div><div style='clear: both;'></div><button class='quitButton'
 document.getElementById('tableTest').insertAdjacentHTML('beforeend', dynamicHTML);
 
 function cellClicked(depth, row, col){
-    console.log("cellClicked!");
+    console.log("cellClicked at coordinates (" + depth + ", " + row + ", " + col + ")");
     // game.boardClicked(row, col, depth, game.getExpectedChar());//TODO: will not need expected char when we use socket
     if(isMyTurn){
         //TODO: use the appropriate players username
         game.boardClicked(depth, row, col, player1);//TODO: uncomment later when socket.io works
+        game.getBoard().printState();
     }
-    game.getBoard().printState();
 }
 
 function quitButtonClicked(){
@@ -462,11 +463,11 @@ socket.on('gameStart',function(jsonObj){
 socket.on('opponentBoardUpdated',function(jsonObj){
     //the jsonObject (maybe) has height, row, and col coordinates and the name of the enemy?
     if(jsonObj.piece !== player1){
+        console.log('opponent updated board at (' + jsonObj.height + ", " + jsonObj.row + ", " + jsonObj.col);
         console.log(jsonObj);
         game.boardClicked(jsonObj.height, jsonObj.row, jsonObj.col, player2);
         isMyTurn = true;
         game.getBoard().printState();
-        console.log('oponent updated board');
     }
     
 });
