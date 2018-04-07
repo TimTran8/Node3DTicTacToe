@@ -65,13 +65,6 @@ app.use(session({
 
 /////////////////// POST REGISTRATION API ///////////////////
 app.post('/registrationAPI', function(req,res,next) {
-    //Miguel's Database
-     var databaseString = "cmpt218";
-     var collectionString = "test";
-
-    //Ery's Database
-//   var databaseString = "cmpt218_epolovin";
-//   var collectionString = "registeredUsers";
 
     /////////////////// MONGO INSERT ///////////////
     console.log(req.body);
@@ -96,16 +89,7 @@ app.post('/registrationAPI', function(req,res,next) {
             stats : {
                 wins: null,
                 losses:null,
-                gameArray:[
-                    {
-                        gameId:null, 
-                        timeStarted:null,
-                        winner:null,
-                        loser:null,
-                        numberOfMoves:null
-                    }
-                    
-                ]
+                gameArray:[]
             }
         };
 
@@ -258,7 +242,7 @@ app.get('/html/landing',checkIfUserisLoggedin, function(req,res){
                             <p>Displaying Game Statistics for ${uname}</p>
                             ${userStatsTag}
                         </div>
-                        <button>New Game</button>
+                        <button onclick="newGame()">New Game</button>
                         <button onclick="logout()">Logout</button>
                         <script src="/socket.io/socket.io.js"></script>
                     </body>
@@ -293,8 +277,27 @@ app.get('/html/game', checkIfUserisLoggedin,function(req,res){
     </html>`;
     usernameArray.push(req.session.user.username);
     res.end(game);
+});
 
+app.get('/html/gameFinished.html', checkIfUserisLoggedin, function(req,res){
+    var gameFinished = `<!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <meta charset="UTF-8" />
+            <title>Landing</title>
+            <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+            <script src='../js/landing.js'></script>
+            <link rel='stylesheet' href='../css/style.css' />
+        </head>
+        <body>
+            <div id="gameStats">
+    
+            </div>
+            <button onclick="goToLanding()">Go To Landing</button>
+        </body>
+    </html>`;
 
+    res.end(gameFinished);
 });
 
 ///////////////// LOGOUT ///////////////////
@@ -303,11 +306,16 @@ app.get('/logout',function(req,res){
         req.flash('error','Successfully logged out');
         res.redirect('/');
     })
+    usernameArray = [];
+    
 });
 
 var peopleOnline = 0;
+var actualpeopleOnline = 0;
+var roomNum = 0;
 io.on('connection', function(socket){
     peopleOnline++;
+    actualpeopleOnline++;
     if(peopleOnline === 2){
         console.log('there are now two players in the thing, here is the thing' + usernameArray);
         var jsonObj = {
@@ -336,8 +344,10 @@ io.on('connection', function(socket){
        socket.broadcast.emit('opponentBoardUpdated', jsonObj);//only the other person gets the updated board
     });
     socket.on('disconnect', function(){
-        peopleOnline--;
-       console.log("diconnected");
+        actualpeopleOnline--;
+        console.log("people online after disconnect", actualpeopleOnline);
+        
+        console.log("diconnected");
         
     });
 });

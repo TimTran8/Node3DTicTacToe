@@ -3,8 +3,6 @@
 // }
 
 function register(){
-
-
 	$.ajax({
 		method: 'POST',
 		url: '/registrationAPI',
@@ -25,4 +23,8 @@ function registerSuccess(data) {
 }
 function back(){
 	window.location.href = '/';
+}
+
+function newGame(){
+	window.location.href = '/html/game';
 }

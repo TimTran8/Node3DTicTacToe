@@ -430,8 +430,8 @@ function quitButtonClicked(){
     alert("someone quit!");
     //TODO: user the other players username;
     game.gameEnded(gameStateEnum.X_WON);//TODO: change later so that we have the parameter of the other person winning
+    window.location.href = '/html/gameFinished.html';   
 }
-
 
 function disconnectFromSocket(){
 	socket.emit('chat', `${username} has diconnected`);
