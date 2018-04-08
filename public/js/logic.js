@@ -250,6 +250,13 @@ function Board(size){
     }
 }
 
+function gameFin(data){
+    if(data === "redirect"){
+        window.location.href = '/html/gameFinished.html';
+        console.log("game finished, now redirecting");
+    }
+    
+}
 function Game(player1, player2, boardSize){
     console.log("about to make a game");
     var BOARD_SIZE = boardSize;
@@ -287,8 +294,8 @@ function Game(player1, player2, boardSize){
         var winner = '';
         var loser = '';
         if(state === gameStateEnum.TIED){
-            winner = piece1 + " " + piece2;
-            loser = piece1 + " " + piece2;
+            winner = piece2;
+            loser = piece2;
         }
         else if(state === gameStateEnum.X_WON){
             winner = piece1;
@@ -306,21 +313,22 @@ function Game(player1, player2, boardSize){
         }
 
         // //currenly works but uncommented cause handeling of post does not work on server
-        // $.ajax({
-        //     method: 'POST',
-        //     url: '/gameEndAPI',
-        //     data: JSON.stringify(jsonObj),    
-        //     processData: false,
-        //     contentType: "application/json"
-        // });
+        $.ajax({
+            method: 'POST',
+            url: '/gameEndAPI',
+            data: JSON.stringify(jsonObj),    
+            processData: false,
+            contentType: "application/json",
+            success: gameFin
+        });
         console.log(jsonObj);
         console.log("here is the stats of the game :");
         console.log("time started - " + jsonObj.timeStarted);
         console.log("winner - " + jsonObj.winner);
         console.log("loser - " + jsonObj.loser);
         console.log("number of moves - " + jsonObj.moveNumber);
-        //TODO: post information here
-
+        
+  
     }
 
     this.sendUpdatedBoard = function(height, row, col, piece){
@@ -352,21 +360,21 @@ function Game(player1, player2, boardSize){
             console.log("finished adding the new character into the board");
             if(board.hasGameFinished(piece1, piece2) === gameStateEnum.X_WON){
                 console.log("the game has finished with " + piece1 + " winning.. game about to end");
-                setTimeout(function(){ alert(piece1 + " won!"); }, 60);//TODO: take out when implementing gameFinished
+                // setTimeout(function(){ alert(piece1 + " won!"); }, 60);//TODO: take out when implementing gameFinished
                 this.gameEnded(gameStateEnum.X_WON);
                 this.sendUpdatedBoard(height, row, col, piece);
                 return;
             }
             else if(board.hasGameFinished(piece1, piece2) === gameStateEnum.O_WON){
                 console.log("the game has finished with " + piece2 + " winning.. game about to end");
-                setTimeout(function(){ alert(piece2 + " won!"); }, 60);//TODO: take out when implementing gameFinished
+                // setTimeout(function(){ alert(piece2 + " won!"); }, 60);//TODO: take out when implementing gameFinished
                 this.gameEnded(gameStateEnum.O_WON);
                 this.sendUpdatedBoard(height, row, col, piece);
                 return;
             }
             else if(board.hasGameFinished(piece1, piece2) === gameStateEnum.TIED){
                 console.log("the game has finished with nobody winning.. game about to end");
-                setTimeout(function(){ alert("nobody won!"); }, 60);//TODO: take out when implementing gameFinished
+                // setTimeout(function(){ alert("nobody won!"); }, 60);//TODO: take out when implementing gameFinished
                 this.gameEnded(gameStateEnum.TIED);
                 this.sendUpdatedBoard(height, row, col, piece);
                 return;
@@ -425,7 +433,7 @@ function cellClicked(depth, row, col){
 }
 
 function quitButtonClicked(){
-    alert("I quit!"); // TODO: delete later
+    // alert("I quit!"); // TODO: delete later
     game.gameEnded(gameStateEnum.O_WON);
     socket.emit('iQuit', player1);
 }

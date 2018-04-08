@@ -87,8 +87,8 @@ app.post('/registrationAPI', function(req,res,next) {
             gender : req.body.gender,
             email : req.body.email,
             stats : {
-                wins: null,
-                losses:null,
+                wins:0,
+                losses:0,
                 gameArray:[]
             }
         };
@@ -254,7 +254,7 @@ app.get('/html/landing',checkIfUserisLoggedin, function(req,res){
     });
 });
 
-////////////////// GAME HTML ////////////////
+////////////////// GET GAME HTML ////////////////
 var usernameArray = [];
 
 app.get('/html/game', checkIfUserisLoggedin,function(req,res){
@@ -281,25 +281,80 @@ app.get('/html/game', checkIfUserisLoggedin,function(req,res){
     res.end(game);
 });
 
+////////////////////// GET GAME FINISHED /////////////////
+var gameFinStats = '';
 app.get('/html/gameFinished.html', checkIfUserisLoggedin, function(req,res){
-    var gameFinished = `<!DOCTYPE html>
-    <html lang="en">
-        <head>
-            <meta charset="UTF-8" />
-            <title>Landing</title>
-            <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
-            <script src='../js/landing.js'></script>
-            <link rel='stylesheet' href='../css/style.css' />
-        </head>
-        <body>
-            <div id="gameStats">
-    
-            </div>
-            <button onclick="goToLanding()">Go To Landing</button>
-        </body>
-    </html>`;
+    var userStatsTag = '';
+    user=req.session.user;
+    var uname = user.username;
+    var stats = '';
+    var wins = '';
+    var losses = '';
+    var gamesPlayed = '';
+    var gameId = '';
+    var timeStarted = '';
+    var winner = '';
+    var loser = '';
+    var numMoves = '';
+    var numberofgamesPlayed = '';
 
-    res.end(gameFinished);
+    MongoClient.connect(url,function(err,client){
+        var database = client.db(databaseString);
+        var collection = database.collection(collectionString);
+
+        collection.find({username:uname}).toArray(function(err,result){
+
+                // stats += dTBegin + "<b>Stats:</b>" + dTend;
+                // wins += dDBegin+"<b>Wins: </b>"+result[0].stats.wins+dDend;
+                // losses += dDBegin+"<b>Losses: </b>"+result[0].stats.losses+dDend;
+                // gamesPlayed += dTBegin + "<b>Games Played: </b>" + dTend + "<br>";
+
+                // console.log((result[0].stats.wins));
+                // console.log((result[0].stats.losses));
+                
+                // for(var i=0; i < result[0].stats.gameArray.length; i++){
+
+                    // gameId = dDBegin+"<b>Game ID: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].gameId+dDend;
+                    // timeStarted = dDBegin+"<b>Time Started: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].timeStarted+dDend;
+                    winner = dDBegin+"<b>Winner: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].winner+dDend;
+                    loser = dDBegin+"<b>Loser: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].loser+dDend;
+                    numMoves = dDBegin+"<b>Number of Moves: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].numberOfMoves+dDend;
+                    
+                    numberofgamesPlayed+=winner+loser+numMoves+"<br>";
+                // }
+                gameFinStats = dLBegin + 
+                                    // stats+
+                                    //     wins+
+                                    //     losses+
+                                        dDBegin+
+                                            dLBegin+
+                                                // gamesPlayed+
+                                                numberofgamesPlayed+
+                                            dLend+
+                                        dDend+
+                                dLend;
+
+                var gameFinished = `<!DOCTYPE html>
+                    <html lang="en">
+                        <head>
+                            <meta charset="UTF-8" />
+                            <title>Landing</title>
+                            <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+                            <script src='../js/landing.js'></script>
+                            <link rel='stylesheet' href='../css/style.css' />
+                        </head>
+                        <body>
+                            <h1>GAME RESULTS</h1>
+                            <div id="gameStats">
+                                ${gameFinStats}
+                            </div>
+                            <button onclick="goToLanding()">Go To Landing</button>
+                        </body>
+                    </html>`;    
+
+                res.end(gameFinished);
+        });
+    });
 });
 
 ///////////////// LOGOUT ///////////////////
@@ -312,41 +367,61 @@ app.get('/logout',function(req,res){
     
 });
 
+var gameIdnum = 0;
 
 ///////////////// GAME END API /////////////////
-// app.post('/gameEndAPI', function(req,res,next){
-//     user=req.session.user;
-//     var uname = user.username; //sees username in session
-//     console.log(uname);
-//     console.log(req.body);
+app.post('/gameEndAPI', function(req,res,next){
+    user=req.session.user;
+    var uname = user.username; //sees username in session
+    console.log(uname);
+    console.log(req.body);
     
-//     ////////////// MONGO FIND AND INSERT //////////////
-//     MongoClient.connect(url, function(err,client){
-//        if(err){
-//             console.log("error connecting to database");
-//             throw err;
-//        } 
-//        console.log('Connected to DB');
-//        var database = client.db(databaseString);
-//        var collection = database.collection(collectionString);
+    ////////////// MONGO FIND AND INSERT //////////////
+    MongoClient.connect(url, function(err,client){
+       if(err){
+            console.log("error connecting to database");
+            throw err;
+       } 
 
-//        var pushStatstoDB = {
-//         "timeStarted" : req.body.timeStarted,
-//         "winner" : req.body.winner,
-//         "loser" : req.body.loser,
-//         "numberOfMoves" : req.body.numberOfMoves
-//        }
+       console.log('Connected to DB');
+       var database = client.db(databaseString);
+       var collection = database.collection(collectionString);
 
-//        collection.find({username:uname}).toArray(function(err, result){
-//            result.stats.push(pushStatstoDB);
-//            collection.update({$push:{pushStatstoDB}},function(err,result){
-//                console.log(result);
-               
-//            });
-//        });
-//     });
+       collection.find({username:uname}).toArray(function(err,result){
+            var winnum = result[0].stats.wins;
+            var lossnum = result[0].stats.losses;
 
-// })
+            var pushStatstoDB = {
+                gameId:result[0].stats.gameArray.length,
+                timeStarted : req.body.timeStarted,
+                winner : req.body.winner,
+                loser : req.body.loser,
+                numberOfMoves : req.body.moveNumber
+            }
+
+            if(uname === req.body.winner){
+                winnum++;
+            }else{
+                lossnum++;
+            }
+
+            collection.update({"username" : uname}, {$set:{"stats.wins":winnum, "stats.losses":lossnum}},
+                function(err, result){
+                    if(err) throw err;
+                    console.log("wins + losses updated");
+                });
+
+            collection.update({"username" : uname}, {$addToSet:{"stats.gameArray": pushStatstoDB}}, function (err,result){
+                if (err) {throw err;}
+                console.log("Document Updated");
+            });
+            
+        });
+        // console.log("Redirecting ");
+        
+        res.send('redirect');
+    });
+});
 
 var peopleOnline = 0;
 var actualpeopleOnline = 0;
@@ -358,7 +433,7 @@ var roomObj = {
 };
 
 function getRoomName(usernameID){
-    for(var i = 0; i < roomArray.length; i++){
+    for(var i = roomArray.length-1; i >= 0; i--){
         for(var j = 0; j < roomArray[i].userArray.length; j++){
             if(usernameID === roomArray[i].userArray[j]){
                 return roomArray[i].roomName;
