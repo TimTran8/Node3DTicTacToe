@@ -1,10 +1,4 @@
-// function hello() {
-// 	console.log("hello");
-// }
-
 function register(){
-
-
 	$.ajax({
 		method: 'POST',
 		url: '/registrationAPI',
@@ -21,8 +15,11 @@ function register(){
 
 function registerSuccess(data) {
 	window.location.href = '/';
-	
 }
 function back(){
 	window.location.href = '/';
+}
+
+function newGame(){
+	window.location.href = '/html/game';
 }

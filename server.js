@@ -65,13 +65,6 @@ app.use(session({
 
 /////////////////// POST REGISTRATION API ///////////////////
 app.post('/registrationAPI', function(req,res,next) {
-    //Miguel's Database
-     var databaseString = "cmpt218";
-     var collectionString = "test";
-
-    //Ery's Database
-//   var databaseString = "cmpt218_epolovin";
-//   var collectionString = "registeredUsers";
 
     /////////////////// MONGO INSERT ///////////////
     console.log(req.body);
@@ -94,18 +87,9 @@ app.post('/registrationAPI', function(req,res,next) {
             gender : req.body.gender,
             email : req.body.email,
             stats : {
-                wins: null,
-                losses:null,
-                gameArray:[
-                    {
-                        gameId:null, 
-                        timeStarted:null,
-                        winner:null,
-                        loser:null,
-                        numberOfMoves:null
-                    }
-                    
-                ]
+                wins:0,
+                losses:0,
+                gameArray:[]
             }
         };
 
@@ -218,7 +202,6 @@ app.get('/html/landing',checkIfUserisLoggedin, function(req,res){
             losses += dDBegin+"<b>Losses: </b>"+result[0].stats.losses+dDend;
             gamesPlayed += dTBegin + "<b>Games Played: </b>" + dTend + "<br>";
 
-
             console.log((result[0].stats.wins));
             console.log((result[0].stats.losses));
             
@@ -258,19 +241,18 @@ app.get('/html/landing',checkIfUserisLoggedin, function(req,res){
                             <p>Displaying Game Statistics for ${uname}</p>
                             ${userStatsTag}
                         </div>
-                        <button>New Game</button>
+                        <button onclick="newGame()">New Game</button>
                         <button onclick="logout()">Logout</button>
                         <script src="/socket.io/socket.io.js"></script>
                     </body>
                     </html>`;
-            
-            // }
+
             res.end(landing);
         });
     });
 });
 
-////////////////// GAME HTML ////////////////
+////////////////// GET GAME HTML ////////////////
 var usernameArray = [];
 
 app.get('/html/game', checkIfUserisLoggedin,function(req,res){
@@ -280,6 +262,7 @@ app.get('/html/game', checkIfUserisLoggedin,function(req,res){
     <head>
         <meta charset="UTF-8">
         <title>3D Tic Tac Toe</title>
+        <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>        
         <script src='../js/logic.js' defer></script>
         <link rel='stylesheet' href='../css/style.css' />
     </head>
@@ -294,8 +277,65 @@ app.get('/html/game', checkIfUserisLoggedin,function(req,res){
     </html>`;
     usernameArray.push(req.session.user.username);
     res.end(game);
+});
 
+////////////////////// GET GAME FINISHED /////////////////
+var gameFinStats = '';
+app.get('/html/gameFinished.html', checkIfUserisLoggedin, function(req,res){
+    var userStatsTag = '';
+    user=req.session.user;
+    var uname = user.username;
+    var stats = '';
+    var wins = '';
+    var losses = '';
+    var gamesPlayed = '';
+    var gameId = '';
+    var timeStarted = '';
+    var winner = '';
+    var loser = '';
+    var numMoves = '';
+    var numberofgamesPlayed = '';
 
+    MongoClient.connect(url,function(err,client){
+        var database = client.db(databaseString);
+        var collection = database.collection(collectionString);
+
+        collection.find({username:uname}).toArray(function(err,result){
+
+            winner = dDBegin+"<b>Winner: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].winner+dDend;
+            loser = dDBegin+"<b>Loser: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].loser+dDend;
+            numMoves = dDBegin+"<b>Number of Moves: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].numberOfMoves+dDend;
+            
+            numberofgamesPlayed+=winner+loser+numMoves+"<br>";
+            gameFinStats = dLBegin + 
+                                dDBegin+
+                                    dLBegin+
+                                        numberofgamesPlayed+
+                                    dLend+
+                                dDend+
+                            dLend;
+
+            var gameFinished = `<!DOCTYPE html>
+                <html lang="en">
+                    <head>
+                        <meta charset="UTF-8" />
+                        <title>Landing</title>
+                        <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+                        <script src='../js/landing.js'></script>
+                        <link rel='stylesheet' href='../css/style.css' />
+                    </head>
+                    <body>
+                        <h1>GAME RESULTS</h1>
+                        <div id="gameStats">
+                            ${gameFinStats}
+                        </div>
+                        <button onclick="goToLanding()">Go To Landing</button>
+                    </body>
+                </html>`;    
+
+            res.end(gameFinished);
+        });
+    });
 });
 
 ///////////////// LOGOUT ///////////////////
@@ -304,45 +344,139 @@ app.get('/logout',function(req,res){
         req.flash('error','Successfully logged out');
         res.redirect('/');
     })
+    usernameArray = [];
+});
+
+
+///////////////// GAME END API /////////////////
+
+var gameIdnum = 0;
+app.post('/gameEndAPI', function(req,res,next){
+    user=req.session.user;
+    var uname = user.username; //sees username in session
+    console.log(uname);
+    console.log(req.body);
+    
+    ////////////// MONGO FIND AND INSERT //////////////
+    MongoClient.connect(url, function(err,client){
+       if(err){
+            console.log("error connecting to database");
+            throw err;
+       } 
+
+       console.log('Connected to DB');
+       var database = client.db(databaseString);
+       var collection = database.collection(collectionString);
+
+       collection.find({username:uname}).toArray(function(err,result){
+            var winnum = result[0].stats.wins;
+            var lossnum = result[0].stats.losses;
+
+            var pushStatstoDB = {
+                gameId:result[0].stats.gameArray.length,
+                timeStarted : req.body.timeStarted,
+                winner : req.body.winner,
+                loser : req.body.loser,
+                numberOfMoves : req.body.moveNumber
+            }
+
+            if(uname === req.body.winner){
+                winnum++;
+            }else{
+                lossnum++;
+            }
+
+            collection.update({"username" : uname}, {$set:{"stats.wins":winnum, "stats.losses":lossnum}},
+                function(err, result){
+                    if(err) throw err;
+                    console.log("wins + losses updated");
+                });
+
+            collection.update({"username" : uname}, {$addToSet:{"stats.gameArray": pushStatstoDB}}, function (err,result){
+                if (err) {throw err;}
+                console.log("Document Updated");
+            });
+        });
+        res.send('redirect');
+    });
 });
 
 var peopleOnline = 0;
+var actualpeopleOnline = 0;
+var roomNum = 0;
+var roomArray = [];
+var roomObj = {
+    "roomName" : "",
+    "userArray" : []
+};
+
+function getRoomName(usernameID){
+    for(var i = roomArray.length-1; i >= 0; i--){
+        for(var j = 0; j < roomArray[i].userArray.length; j++){
+            if(usernameID === roomArray[i].userArray[j]){
+                return roomArray[i].roomName;
+            }
+        }
+    }
+    return "";
+}
+
 io.on('connection', function(socket){
     peopleOnline++;
+    actualpeopleOnline++;
+    room = "room"+roomNum;
+
+    socket.join(room);
+
+    if(peopleOnline === 1){
+        roomObj.roomName = room;
+        roomObj.userArray.push(usernameArray[usernameArray.length - 1]);
+        console.log("room name ", room);        
+    }
+
     if(peopleOnline === 2){
-        console.log('there are now two players in the thing, here is the thing' + usernameArray);
+        roomObj.userArray.push(usernameArray[usernameArray.length - 1]);
+        roomArray.push(roomObj);
+        roomObj = {
+            "roomName" : "",
+            "userArray" : []
+        };
         var jsonObj = {
             "usernameArray" : usernameArray,
             "isMyTurn" : true
         }
-        socket.broadcast.emit('gameStart', jsonObj);//how to make it so that someone gets true while the other gets false
+        socket.broadcast.to(getRoomName(usernameArray[usernameArray.length - 1])).emit('gameStart', jsonObj);//how to make it so that someone gets true while the other gets false
+        console.log("get room name1 ",getRoomName(usernameArray[usernameArray.length - 1]));
+        
         jsonObj = {
             "usernameArray" : usernameArray,
             "isMyTurn" : false
         }
         socket.emit('gameStart', jsonObj);//how to make it so that someone gets true while the other gets false
+        console.log("get room name2 ",getRoomName(usernameArray[usernameArray.length - 1]));
+       
         peopleOnline = 0;
         usernameArray = [];
+        roomNum++;
     }
     console.log("people online", peopleOnline);
     
     console.log('new connection');
-//    socket.on('myGameFinished', function(jsonObj){
-//       console.log("game has finished");
-//       socket.broadcast.emit('gameFinished', jsonObj);
-//
-//    });
+
     socket.on('sendUpdatedBoard',function(jsonObj){
-       console.log("updated board");
-       socket.broadcast.emit('opponentBoardUpdated', jsonObj);//only the other person gets the updated board
+       socket.broadcast.to(getRoomName(jsonObj.piece)).emit('opponentBoardUpdated', jsonObj);//only the other person gets the updated board
     });
     socket.on('disconnect', function(){
-        peopleOnline--;
-       console.log("diconnected");
-        
+        actualpeopleOnline--;
+        if(actualpeopleOnline===0){
+            roomNum = 0;
+        }
+        console.log("people online after disconnect", actualpeopleOnline);
+        console.log("diconnected");
+    });
+    socket.on('iQuit', function(quittingPerson){
+       socket.broadcast.to(getRoomName(quittingPerson)).emit('personQuit');//only the other person gets the updated board
     });
 });
 
-
-// http.createServer(app).listen(port);
 console.log('running on port', port);
