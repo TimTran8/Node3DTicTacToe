@@ -202,7 +202,6 @@ app.get('/html/landing',checkIfUserisLoggedin, function(req,res){
             losses += dDBegin+"<b>Losses: </b>"+result[0].stats.losses+dDend;
             gamesPlayed += dTBegin + "<b>Games Played: </b>" + dTend + "<br>";
 
-
             console.log((result[0].stats.wins));
             console.log((result[0].stats.losses));
             
@@ -247,8 +246,7 @@ app.get('/html/landing',checkIfUserisLoggedin, function(req,res){
                         <script src="/socket.io/socket.io.js"></script>
                     </body>
                     </html>`;
-            
-            // }
+
             res.end(landing);
         });
     });
@@ -304,55 +302,38 @@ app.get('/html/gameFinished.html', checkIfUserisLoggedin, function(req,res){
 
         collection.find({username:uname}).toArray(function(err,result){
 
-                // stats += dTBegin + "<b>Stats:</b>" + dTend;
-                // wins += dDBegin+"<b>Wins: </b>"+result[0].stats.wins+dDend;
-                // losses += dDBegin+"<b>Losses: </b>"+result[0].stats.losses+dDend;
-                // gamesPlayed += dTBegin + "<b>Games Played: </b>" + dTend + "<br>";
+            winner = dDBegin+"<b>Winner: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].winner+dDend;
+            loser = dDBegin+"<b>Loser: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].loser+dDend;
+            numMoves = dDBegin+"<b>Number of Moves: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].numberOfMoves+dDend;
+            
+            numberofgamesPlayed+=winner+loser+numMoves+"<br>";
+            gameFinStats = dLBegin + 
+                                dDBegin+
+                                    dLBegin+
+                                        numberofgamesPlayed+
+                                    dLend+
+                                dDend+
+                            dLend;
 
-                // console.log((result[0].stats.wins));
-                // console.log((result[0].stats.losses));
-                
-                // for(var i=0; i < result[0].stats.gameArray.length; i++){
+            var gameFinished = `<!DOCTYPE html>
+                <html lang="en">
+                    <head>
+                        <meta charset="UTF-8" />
+                        <title>Landing</title>
+                        <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+                        <script src='../js/landing.js'></script>
+                        <link rel='stylesheet' href='../css/style.css' />
+                    </head>
+                    <body>
+                        <h1>GAME RESULTS</h1>
+                        <div id="gameStats">
+                            ${gameFinStats}
+                        </div>
+                        <button onclick="goToLanding()">Go To Landing</button>
+                    </body>
+                </html>`;    
 
-                    // gameId = dDBegin+"<b>Game ID: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].gameId+dDend;
-                    // timeStarted = dDBegin+"<b>Time Started: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].timeStarted+dDend;
-                    winner = dDBegin+"<b>Winner: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].winner+dDend;
-                    loser = dDBegin+"<b>Loser: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].loser+dDend;
-                    numMoves = dDBegin+"<b>Number of Moves: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].numberOfMoves+dDend;
-                    
-                    numberofgamesPlayed+=winner+loser+numMoves+"<br>";
-                // }
-                gameFinStats = dLBegin + 
-                                    // stats+
-                                    //     wins+
-                                    //     losses+
-                                        dDBegin+
-                                            dLBegin+
-                                                // gamesPlayed+
-                                                numberofgamesPlayed+
-                                            dLend+
-                                        dDend+
-                                dLend;
-
-                var gameFinished = `<!DOCTYPE html>
-                    <html lang="en">
-                        <head>
-                            <meta charset="UTF-8" />
-                            <title>Landing</title>
-                            <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
-                            <script src='../js/landing.js'></script>
-                            <link rel='stylesheet' href='../css/style.css' />
-                        </head>
-                        <body>
-                            <h1>GAME RESULTS</h1>
-                            <div id="gameStats">
-                                ${gameFinStats}
-                            </div>
-                            <button onclick="goToLanding()">Go To Landing</button>
-                        </body>
-                    </html>`;    
-
-                res.end(gameFinished);
+            res.end(gameFinished);
         });
     });
 });
@@ -364,12 +345,12 @@ app.get('/logout',function(req,res){
         res.redirect('/');
     })
     usernameArray = [];
-    
 });
 
-var gameIdnum = 0;
 
 ///////////////// GAME END API /////////////////
+
+var gameIdnum = 0;
 app.post('/gameEndAPI', function(req,res,next){
     user=req.session.user;
     var uname = user.username; //sees username in session
@@ -415,10 +396,7 @@ app.post('/gameEndAPI', function(req,res,next){
                 if (err) {throw err;}
                 console.log("Document Updated");
             });
-            
         });
-        // console.log("Redirecting ");
-        
         res.send('redirect');
     });
 });
@@ -449,16 +427,11 @@ io.on('connection', function(socket){
     room = "room"+roomNum;
 
     socket.join(room);
-    console.log("RoOm L340 ", room);
-    console.log("people online ", peopleOnline);
-    
 
     if(peopleOnline === 1){
         roomObj.roomName = room;
         roomObj.userArray.push(usernameArray[usernameArray.length - 1]);
-        console.log("room name ", room);
-        console.log("username array length -1 L344", usernameArray[usernameArray.length - 1]);
-        
+        console.log("room name ", room);        
     }
 
     if(peopleOnline === 2){
@@ -468,9 +441,6 @@ io.on('connection', function(socket){
             "roomName" : "",
             "userArray" : []
         };
-        console.log("username array length -1 L355", usernameArray[usernameArray.length - 1]);
-
-        console.log('there are now two players in the thing, here is the thing' + usernameArray);
         var jsonObj = {
             "usernameArray" : usernameArray,
             "isMyTurn" : true
@@ -492,13 +462,8 @@ io.on('connection', function(socket){
     console.log("people online", peopleOnline);
     
     console.log('new connection');
-//    socket.on('myGameFinished', function(jsonObj){
-//       console.log("game has finished");
-//       socket.broadcast.emit('gameFinished', jsonObj);
-//
-//    });
+
     socket.on('sendUpdatedBoard',function(jsonObj){
-       console.log("updated board");
        socket.broadcast.to(getRoomName(jsonObj.piece)).emit('opponentBoardUpdated', jsonObj);//only the other person gets the updated board
     });
     socket.on('disconnect', function(){
@@ -507,16 +472,11 @@ io.on('connection', function(socket){
             roomNum = 0;
         }
         console.log("people online after disconnect", actualpeopleOnline);
-        
         console.log("diconnected");
-        
     });
     socket.on('iQuit', function(quittingPerson){
        socket.broadcast.to(getRoomName(quittingPerson)).emit('personQuit');//only the other person gets the updated board
-        
     });
 });
 
-
-// http.createServer(app).listen(port);
 console.log('running on port', port);

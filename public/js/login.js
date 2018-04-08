@@ -1,7 +1,3 @@
-// function hello() {
-// 	console.log("hello");
-// }
-
 function register(){
 	$.ajax({
 		method: 'POST',
