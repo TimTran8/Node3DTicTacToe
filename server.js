@@ -264,6 +264,7 @@ app.get('/html/game', checkIfUserisLoggedin,function(req,res){
     <head>
         <meta charset="UTF-8">
         <title>3D Tic Tac Toe</title>
+        <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>        
         <script src='../js/logic.js' defer></script>
         <link rel='stylesheet' href='../css/style.css' />
     </head>
@@ -272,6 +273,7 @@ app.get('/html/game', checkIfUserisLoggedin,function(req,res){
             <p id='playerTwo'></p>
             <br>
             <p id='turn'>Turn: </p>
+            <p id='playerTurn'></p>
             <script src="/socket.io/socket.io.js"></script>
         </body>
     </html>`;
@@ -310,44 +312,127 @@ app.get('/logout',function(req,res){
     
 });
 
+
+///////////////// GAME END API /////////////////
+// app.post('/gameEndAPI', function(req,res,next){
+//     user=req.session.user;
+//     var uname = user.username; //sees username in session
+//     console.log(uname);
+//     console.log(req.body);
+    
+//     ////////////// MONGO FIND AND INSERT //////////////
+//     MongoClient.connect(url, function(err,client){
+//        if(err){
+//             console.log("error connecting to database");
+//             throw err;
+//        } 
+//        console.log('Connected to DB');
+//        var database = client.db(databaseString);
+//        var collection = database.collection(collectionString);
+
+//        var pushStatstoDB = {
+//         "timeStarted" : req.body.timeStarted,
+//         "winner" : req.body.winner,
+//         "loser" : req.body.loser,
+//         "numberOfMoves" : req.body.numberOfMoves
+//        }
+
+//        collection.find({username:uname}).toArray(function(err, result){
+//            result.stats.push(pushStatstoDB);
+//            collection.update({$push:{pushStatstoDB}},function(err,result){
+//                console.log(result);
+               
+//            });
+//        });
+//     });
+
+// })
+
 var peopleOnline = 0;
 var actualpeopleOnline = 0;
 var roomNum = 0;
+var roomArray = [];
+var roomObj = {
+    "roomName" : "",
+    "userArray" : []
+};
+
+function getRoomName(usernameID){
+    for(var i = 0; i < roomArray.length; i++){
+        for(var j = 0; j < roomArray[i].userArray.length; j++){
+            if(usernameID === roomArray[i].userArray[j]){
+                return roomArray[i].roomName;
+            }
+        }
+    }
+    return "";
+}
+
 io.on('connection', function(socket){
     peopleOnline++;
     actualpeopleOnline++;
+    room = "room"+roomNum;
+
+    socket.join(room);
+    console.log("RoOm L340 ", room);
+    
+    if(peopleOnline === 1){
+        roomObj.roomName = room;
+        roomObj.userArray.push(usernameArray[usernameArray.length - 1]);
+        console.log("room name ", room);
+        console.log("username array length -1 L344", usernameArray[usernameArray.length - 1]);
+        
+    }
+
     if(peopleOnline === 2){
+        roomObj.userArray.push(usernameArray[usernameArray.length - 1]);
+        roomArray.push(roomObj);
+        roomObj = {
+            "roomName" : "",
+            "userArray" : []
+        };
+        console.log("username array length -1 L355", usernameArray[usernameArray.length - 1]);
+
         console.log('there are now two players in the thing, here is the thing' + usernameArray);
         var jsonObj = {
             "usernameArray" : usernameArray,
             "isMyTurn" : true
         }
-        socket.broadcast.emit('gameStart', jsonObj);//how to make it so that someone gets true while the other gets false
+        socket.broadcast.to(getRoomName(usernameArray[usernameArray.length - 1])).emit('gameStart', jsonObj);//how to make it so that someone gets true while the other gets false
+        console.log("get room name1 ",getRoomName(usernameArray[usernameArray.length - 1]));
+        
         jsonObj = {
             "usernameArray" : usernameArray,
             "isMyTurn" : false
         }
         socket.emit('gameStart', jsonObj);//how to make it so that someone gets true while the other gets false
+        console.log("get room name2 ",getRoomName(usernameArray[usernameArray.length - 1]));
+       
         peopleOnline = 0;
         usernameArray = [];
+        roomNum++;
     }
     console.log("people online", peopleOnline);
     
     console.log('new connection');
-    socket.on('myGameFinished', function(){
-       console.log("game has finished");
-       socket.broadcast.emit('gameFinished', 'game fin');
-
-    });
+//    socket.on('myGameFinished', function(jsonObj){
+//       console.log("game has finished");
+//       socket.broadcast.emit('gameFinished', jsonObj);
+//
+//    });
     socket.on('sendUpdatedBoard',function(jsonObj){
        console.log("updated board");
-       socket.broadcast.emit('opponentBoardUpdated', jsonObj);//only the other person gets the updated board
+       socket.broadcast.to(getRoomName(jsonObj.piece)).emit('opponentBoardUpdated', jsonObj);//only the other person gets the updated board
     });
     socket.on('disconnect', function(){
         actualpeopleOnline--;
         console.log("people online after disconnect", actualpeopleOnline);
         
         console.log("diconnected");
+        
+    });
+    socket.on('iQuit', function(quittingPerson){
+       socket.broadcast.to(getRoomName(quittingPerson)).emit('personQuit');//only the other person gets the updated board
         
     });
 });

@@ -1,18 +1,11 @@
 
-var isMyTurn = true;//TODO: implement later
+var isMyTurn = false;//TODO: implement later
 //Enum for gamestate
 var gameStateEnum = {
     "PLAYING" : 1,
     "X_WON" : 2,
     "O_WON" : 3,
     "TIED" : 4
-}
-
-
-var pieceEnum = {
-    "X_PIECE" : 'X',
-    "O_PIECE" : 'O',
-    "EMPTY_CELL" : ' '
 }
 
 /*
@@ -48,16 +41,16 @@ function Board(size){
         Does not care what kind of piece is being inserted.
         Takes in the coordinates and the piece being inserted.
     */
-    this.addNewCharacter = function(row, col, height, piece){
+    this.addNewCharacter = function(height, row, col, piece){
         console.log("new character(" + piece + ") added at (" + row + ", " + col + ", " + height + ")");
-        boardArray[row][col][height] = piece;
+        boardArray[height][row][col] = piece;
     }
 
     /*
         Sees if the location that is asking to be placed in is still within the boards boundaries.
         Takes in the coordinates of the board.
     */
-    this.isLocationValid = function(row, col, height){
+    this.isLocationValid = function(height, row, col){
         console.log("isLocationValid called");
         return  (row >= 0 && row < BOARD_SIZE) &&
                 (col >= 0 && col < BOARD_SIZE) &&
@@ -68,9 +61,9 @@ function Board(size){
         Sees if the location that is asking to be placed already has something inside it.
         Takes in the coordinates of the board.
     */
-    this.isLocationFilled = function(row, col, height){
+    this.isLocationFilled = function(height, row, col){
         console.log("isLocationFilled called");
-        return boardArray[row][col][height] !== EMPTY_CELL;
+        return boardArray[height][row][col] !== EMPTY_CELL;
     }
 
     /*
@@ -81,7 +74,7 @@ function Board(size){
         for(var depthIndex = 0; depthIndex < BOARD_SIZE; depthIndex++){
             for(var horizIndex = 0; horizIndex < BOARD_SIZE; horizIndex++){
                 for(var vertIndex = 0; vertIndex < BOARD_SIZE; vertIndex++){
-                    if(boardArray[vertIndex][horizIndex][depthIndex] === EMPTY_CELL){
+                    if(boardArray[depthIndex][vertIndex][horizIndex] === EMPTY_CELL){
                         console.log("board is NOT full");
                         return false;
                     }
@@ -101,7 +94,7 @@ function Board(size){
         for(var depthIndex = 0; depthIndex < BOARD_SIZE; depthIndex++){
             for(var horizIndex = 0; horizIndex < BOARD_SIZE; horizIndex++){
                 for(var vertIndex = 0; vertIndex < BOARD_SIZE; vertIndex++){
-                    if(boardArray[vertIndex][horizIndex][depthIndex] !== EMPTY_CELL){
+                    if(boardArray[depthIndex][vertIndex][horizIndex] !== EMPTY_CELL){
                         pieceAmount++;
                     }
                 }
@@ -217,7 +210,6 @@ function Board(size){
         return false;
     }
 
-    //TODO: does the x piece and o piece need an enum
     /*
         Checks if game has finished. Returns the state of the game.
     */
@@ -262,11 +254,11 @@ function Game(player1, player2, boardSize){
     console.log("about to make a game");
     var BOARD_SIZE = boardSize;
     var piece1 = player1;
-    var piece2 = player2;//TODO: do i need to know who the players are as in the names?
+    var piece2 = player2;
+    var time = Date();
 
     var currentGameState = gameStateEnum.PLAYING;
     var board = new Board(BOARD_SIZE);
-    var expectedChar = piece1;//TODO: will not need this when we do sockets
     console.log("initialized a game");
 
 
@@ -279,30 +271,12 @@ function Game(player1, player2, boardSize){
         return BOARD_SIZE;
     }
 
-    /*
-        Returns the expected character of the game.
-    */
-    this.getExpectedChar = function(){//TODO: will not need this when we do sockets
-        return expectedChar;
-    }
-
     this.setPlayer2 = function(piece){
         piece2 = piece;
     }
 
-    /*
-        Updates the expected character.
-        CLIENT MUST NOT TOUCH THIS.
-    */
-    this.updateExpectedChar = function(){//TODO: will not need this when we do sockets
-        console.log("updateExpectedChar called");
-        if(expectedChar === piece1){
-            expectedChar = piece2;
-        }
-        else{
-            expectedChar = piece1;
-        }
-        console.log("updated expected char.. it is now " + expectedChar);
+    this.setTime = function(newTime){
+        time = newTime;
     }
 
     /*
@@ -310,62 +284,97 @@ function Game(player1, player2, boardSize){
     */
     this.gameEnded = function(state){
         console.log("gameEnded called");
-        socket.emit('myGameFinished','jsonObj');
-        //TODO: use socketio or something so that we can determine whos turn is it? but how can we have many games while this is happening? hm
-        //TODO: maybe return a json? or maybe this is what will talk to the server?
+        var winner = '';
+        var loser = '';
+        if(state === gameStateEnum.TIED){
+            winner = piece1 + " " + piece2;
+            loser = piece1 + " " + piece2;
+        }
+        else if(state === gameStateEnum.X_WON){
+            winner = piece1;
+            loser = piece2;
+        }
+        else{
+            winner = piece2;
+            loser = piece1;
+        }
+        var jsonObj = {
+            "timeStarted" : time,
+            "winner" : winner,
+            "loser" : loser,
+            "moveNumber" : board.getMoveAmount()
+        }
+
+        // //currenly works but uncommented cause handeling of post does not work on server
+        // $.ajax({
+        //     method: 'POST',
+        //     url: '/gameEndAPI',
+        //     data: JSON.stringify(jsonObj),    
+        //     processData: false,
+        //     contentType: "application/json"
+        // });
+        console.log(jsonObj);
+        console.log("here is the stats of the game :");
+        console.log("time started - " + jsonObj.timeStarted);
+        console.log("winner - " + jsonObj.winner);
+        console.log("loser - " + jsonObj.loser);
+        console.log("number of moves - " + jsonObj.moveNumber);
+        //TODO: post information here
+
+    }
+
+    this.sendUpdatedBoard = function(height, row, col, piece){
+        var jsonObj = {
+            "height":height,
+            "row":row,
+            "col":col,
+            "piece":piece
+        }
+        socket.emit('sendUpdatedBoard',jsonObj);//json object willl have the coordinates and username of myself
+        document.getElementById('playerTurn').innerHTML = piece === piece1 ? piece2 : piece1;
+        isMyTurn = false;
     }
 
 
     //TODO: public, use this when a cell gets clicked
-    //TODO: how do we know whos turn is it? will the server let us know?
     /*
         This is what happens to update the game and let it do its thing.
         Accepts the coordinates and the piece that one tries to place into the board.
     */
-    this.boardClicked = function(row, col, height, piece){
-        console.log("boardClicked called");
-        if(!board.isLocationFilled(row, col, height)){
+    this.boardClicked = function(height, row, col, piece){
+        console.log("boardClicked called at (" + height + ", " + row + ", " + col + ")");
+        console.log("the piece being placed in is " + piece);
+        if(!board.isLocationFilled(height, row, col)){
             console.log("specified location not filled");
-            if(true){//TODO: will not need expectedChar when we do sockets
-                document.getElementById('cell' + height + row + col).style.backgroundColor = piece === piece1 ? "blue" : "green";//TODO: will not need expectedChar when we do socket
-                console.log("the piece is the expected char")
-                board.addNewCharacter(row, col, height, piece);
-                console.log("finished adding the new character into the board");
-                if(board.hasGameFinished(piece1, piece2) === gameStateEnum.X_WON){
-                    console.log("the game has finished with " + piece1 + " winning.. game about to end");
-                    setTimeout(function(){ alert(piece1 + " won!"); }, 60);
-                    this.gameEnded(gameStateEnum.X_WON);
-                    return;
-                }
-                else if(board.hasGameFinished(piece1, piece2) === gameStateEnum.O_WON){
-                    console.log("the game has finished with " + piece2 + " winning.. game about to end");
-                    setTimeout(function(){ alert(piece2 + " won!"); }, 60);
-                    this.gameEnded(gameStateEnum.O_WON);
-                    return;
-                }
-                else if(board.hasGameFinished(piece1, piece2) === gameStateEnum.TIED){
-                    console.log("the game has finished with nobody winning.. game about to end");
-                    setTimeout(function(){ alert("nobody won!"); }, 60);
-                    this.gameEnded(gameStateEnum.TIED);
-                    return;
-                }
-                else{
-                    console.log("the game has not yet finished.. game will continue");
-                    isMyTurn = false;
-                    //TODO: do an emit here for sendUpdatedBoard
-                    var jsonObj = {
-                        "row":row,
-                        "col":col,
-                        "height":height,
-                        "piece":piece
-                    }
-                    socket.emit('sendUpdatedBoard',jsonObj);//json object willl have the coordinates and username of myself
-                    // this.updateExpectedChar();//TODO: will not need this when we start using sockets
-                    isMyTurn = false;
-                }
+            document.getElementById('cell' + height + row + col).style.backgroundColor = piece === piece1 ? "blue" : "green";
+            console.log("the piece is the expected char")
+            board.addNewCharacter(height, row, col, piece);
+            console.log("finished adding the new character into the board");
+            if(board.hasGameFinished(piece1, piece2) === gameStateEnum.X_WON){
+                console.log("the game has finished with " + piece1 + " winning.. game about to end");
+                setTimeout(function(){ alert(piece1 + " won!"); }, 60);//TODO: take out when implementing gameFinished
+                this.gameEnded(gameStateEnum.X_WON);
+                this.sendUpdatedBoard(height, row, col, piece);
                 return;
             }
-            console.log("Error: piece was NOT the expectedChar.. not doing anything");
+            else if(board.hasGameFinished(piece1, piece2) === gameStateEnum.O_WON){
+                console.log("the game has finished with " + piece2 + " winning.. game about to end");
+                setTimeout(function(){ alert(piece2 + " won!"); }, 60);//TODO: take out when implementing gameFinished
+                this.gameEnded(gameStateEnum.O_WON);
+                this.sendUpdatedBoard(height, row, col, piece);
+                return;
+            }
+            else if(board.hasGameFinished(piece1, piece2) === gameStateEnum.TIED){
+                console.log("the game has finished with nobody winning.. game about to end");
+                setTimeout(function(){ alert("nobody won!"); }, 60);//TODO: take out when implementing gameFinished
+                this.gameEnded(gameStateEnum.TIED);
+                this.sendUpdatedBoard(height, row, col, piece);
+                return;
+            }
+            else{
+                console.log("the game has not yet finished.. game will continue");
+                this.sendUpdatedBoard(height, row, col, piece);
+            }
             return;
         }
         console.log("Error: the location where it was clicked is already filled.. not doing anything");
@@ -379,16 +388,7 @@ function Game(player1, player2, boardSize){
     }
 }
 
-
-
-
-
-
-
-
-
-
-var player1 = document.getElementById('playerOne').innerHTML;//TODO: change these later to be the actual usernames... player1 is always yourself but player2 is always the opponent
+var player1 = document.getElementById('playerOne').innerHTML;
 var player2 = '';
 console.log('player 1 is ' + player1);
 var size = 4;
@@ -417,20 +417,17 @@ dynamicHTML += "</div><div style='clear: both;'></div><button class='quitButton'
 document.getElementById('tableTest').insertAdjacentHTML('beforeend', dynamicHTML);
 
 function cellClicked(depth, row, col){
-    console.log("cellClicked!");
-    // game.boardClicked(row, col, depth, game.getExpectedChar());//TODO: will not need expected char when we use socket
+    console.log("cellClicked at coordinates (" + depth + ", " + row + ", " + col + ")");
     if(isMyTurn){
-        //TODO: use the appropriate players username
-        game.boardClicked(depth, row, col, player1);//TODO: uncomment later when socket.io works
+        game.boardClicked(depth, row, col, player1);
+        game.getBoard().printState();
     }
-    game.getBoard().printState();
 }
 
 function quitButtonClicked(){
-    alert("someone quit!");
-    //TODO: user the other players username;
-    game.gameEnded(gameStateEnum.X_WON);//TODO: change later so that we have the parameter of the other person winning
-    window.location.href = '/html/gameFinished.html';   
+    alert("I quit!"); // TODO: delete later
+    game.gameEnded(gameStateEnum.O_WON);
+    socket.emit('iQuit', player1);
 }
 
 function disconnectFromSocket(){
@@ -440,71 +437,33 @@ function disconnectFromSocket(){
 	// re-direct
 }
 
-//TODO: on gameStart
 socket.on('gameStart',function(jsonObj){
     isMyTurn = jsonObj.isMyTurn;
     console.log("is my turn = ", isMyTurn);
-    // isMyTurn = true;
     for(var i = 0; i < jsonObj.usernameArray.length; i++){
         if(jsonObj.usernameArray[i] !== player1){
             player2 = jsonObj.usernameArray[i];
             game.setPlayer2(player2);
         }
     }
-    document.getElementById('playerTwo').innerHTML += player2;
+    document.getElementById('playerTwo').innerHTML = player2;
+    document.getElementById('playerTurn').innerHTML = isMyTurn ? player1 : player2;
+    game.setTime(Date());
     console.log("game started");
-    
-    //not too sure what to do here still
-    //someones gonna have a true while the other has a false
 });
 
-//TODO: on opponentBoardUpdated
 socket.on('opponentBoardUpdated',function(jsonObj){
-    //the jsonObject (maybe) has height, row, and col coordinates and the name of the enemy?
     if(jsonObj.piece !== player1){
+        console.log('opponent updated board at (' + jsonObj.height + ", " + jsonObj.row + ", " + jsonObj.col);
         console.log(jsonObj);
         game.boardClicked(jsonObj.height, jsonObj.row, jsonObj.col, player2);
         isMyTurn = true;
         game.getBoard().printState();
-        console.log('oponent updated board');
     }
     
 });
 
-//TODO: on opponentEntered
-socket.on('opponentEntered',function(jsonObj){
-	//not too sure what to do here still
+socket.on('personQuit', function (){
+    alert("someone quit!"); // TODO: delete later
+    game.gameEnded(gameStateEnum.X_WON);
 });
-
-//TODO: on gameFinished
-socket.on('gameFinished',function(jsonObj){
-    console.log('game is finished');
-    
-	//do a post on the jsonObject so that we can hand the data into the database for this particular person
- //ajax call where you post the data into database, after, you disconnect from the socket, then redirect to the finished page
-});
-
-/*
-    logic.js should have a variable whether or not the player can click a cell or not
-
-
-    Client Side:
-    on opponentBoardUpdated :
-        - recieves a json object that has the board
-        - we replace our board to be the most updated board
-        - we set our isOurTurn to be true
-
-    on opponentEntered
-
-    on gameFinished :
-        ~this will tell us that the game has ended whether it was from myself or from the opponent
-        -receives a json object that has the board and who won and who lost, and time started, and number of moves
-        - we replace our board to be the most updated board
-        - we post the winner, the loser, the time started, and the number of moves to the server
-
-    emit sendUpdatedBoard:
-        -sends out a json object that has the coordinates of where the piece is placed and the username of the opponent
-
-    emit myGameFinished:
-        -sends a json object that has the board, who won, and who lost, time started, and number of moves
-*/
