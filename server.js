@@ -375,7 +375,9 @@ io.on('connection', function(socket){
 
     socket.join(room);
     console.log("RoOm L340 ", room);
+    console.log("people online ", peopleOnline);
     
+
     if(peopleOnline === 1){
         roomObj.roomName = room;
         roomObj.userArray.push(usernameArray[usernameArray.length - 1]);
@@ -426,6 +428,9 @@ io.on('connection', function(socket){
     });
     socket.on('disconnect', function(){
         actualpeopleOnline--;
+        if(actualpeopleOnline===0){
+            roomNum = 0;
+        }
         console.log("people online after disconnect", actualpeopleOnline);
         
         console.log("diconnected");
