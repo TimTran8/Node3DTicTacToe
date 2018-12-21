@@ -4,24 +4,14 @@ var http = require('http');
 var flash = require('express-flash');
 var session = require('express-session');
 var MongoClient = require('mongodb').MongoClient;
-var port = process.env.PORT || 8080;
+var port = process.env.PORT || 5000;
 var server = http.createServer(app).listen(port);
 var io = require('socket.io')(server);
 var clientsConnected = 0;
-var url = '';
-var databaseString = '';
-var collectionString = '';
-var isErys = true;
-if(isErys){
-    url = 'mongodb://root:toor@ds119129.mlab.com:19129/cmpt218_epolovin';
-    databaseString = "cmpt218_epolovin";
-    collectionString = "registeredUsers";
-}
-else{
-     url = 'mongodb://root:root@ds117469.mlab.com:17469/cmpt218';
-     databaseString = "cmpt218";
-     collectionString = "test";
-}
+
+var url = 'mongodb://root:toor@ds119129.mlab.com:19129/cmpt218_epolovin';
+var databaseString = "cmpt218_epolovin";
+var collectionString = "registeredUsers";
 
 var dLBegin = `<dl>`;
 var dLend = `</dl>`;
@@ -302,9 +292,13 @@ app.get('/html/gameFinished.html', checkIfUserisLoggedin, function(req,res){
 
         collection.find({username:uname}).toArray(function(err,result){
 
-            winner = dDBegin+"<b>Winner: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].winner+dDend;
-            loser = dDBegin+"<b>Loser: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].loser+dDend;
-            numMoves = dDBegin+"<b>Number of Moves: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].numberOfMoves+dDend;
+            //winner = dDBegin+"<b>Winner: </b>"+result[0].stats.gameArray[result[0].stats.gameArray.length-1].winner+dDend;
+            winner = dDBegin+"<b>Winner: </b>"+pushStatstoDB.winner+dDend;
+            // console.log(winner);
+            loser = dDBegin+"<b>Loser: </b>"+pushStatstoDB.loser+dDend;
+            // console.log(loser);
+            numMoves = dDBegin+"<b>Number of Moves: </b>"+pushStatstoDB.numberOfMoves+dDend;
+            // console.log(numMoves);
             
             numberofgamesPlayed+=winner+loser+numMoves+"<br>";
             gameFinStats = dLBegin + 
@@ -351,6 +345,7 @@ app.get('/logout',function(req,res){
 ///////////////// GAME END API /////////////////
 
 var gameIdnum = 0;
+var pushStatstoDB;
 app.post('/gameEndAPI', function(req,res,next){
     user=req.session.user;
     var uname = user.username; //sees username in session
@@ -372,14 +367,14 @@ app.post('/gameEndAPI', function(req,res,next){
             var winnum = result[0].stats.wins;
             var lossnum = result[0].stats.losses;
 
-            var pushStatstoDB = {
+            pushStatstoDB = {
                 gameId:result[0].stats.gameArray.length,
                 timeStarted : req.body.timeStarted,
                 winner : req.body.winner,
                 loser : req.body.loser,
                 numberOfMoves : req.body.moveNumber
             }
-
+            console.log(`push stats for ${uname}`, pushStatstoDB);
             if(uname === req.body.winner){
                 winnum++;
             }else{
@@ -390,14 +385,16 @@ app.post('/gameEndAPI', function(req,res,next){
                 function(err, result){
                     if(err) throw err;
                     console.log("wins + losses updated");
+ 
+                    collection.update({"username" : uname}, {$push:{"stats.gameArray": pushStatstoDB}}, function (err,result){
+                        if (err) {throw err;}
+                        console.log("Document Updated");
+                    });
                 });
 
-            collection.update({"username" : uname}, {$addToSet:{"stats.gameArray": pushStatstoDB}}, function (err,result){
-                if (err) {throw err;}
-                console.log("Document Updated");
-            });
         });
         res.send('redirect');
+        // res.redirect('/html/gameFinished.html')
     });
 });
 
@@ -425,7 +422,7 @@ io.on('connection', function(socket){
     peopleOnline++;
     actualpeopleOnline++;
     room = "room"+roomNum;
-
+	console.log("people online: ", peopleOnline)
     socket.join(room);
 
     if(peopleOnline === 1){

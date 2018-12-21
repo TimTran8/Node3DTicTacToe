@@ -1,5 +1,5 @@
 function logout(){
-    window.location.href = "/";
+    window.location.href = "/logout";
 }
 
 function newGame(){

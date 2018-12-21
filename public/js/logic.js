@@ -287,7 +287,8 @@ function Game(player1, player2, boardSize){
             "loser" : loser,
             "moveNumber" : board.getMoveAmount()
         }
-
+        // console.log(jsonObj)
+        // alert(jsonObj);
         // //currenly works but uncommented cause handeling of post does not work on server
         $.ajax({
             method: 'POST',
@@ -357,7 +358,7 @@ var size = 4;
 var game = new Game(player1, player2, size);
 
 // var socket = io("http://cmpt218.csil.sfu.ca:8080");//TODO: change later to the correct thing
-var socket = io("http://localhost:8080");
+var socket = io("http://localhost:5000");
 
 
 var dynamicHTML = "<div>";
